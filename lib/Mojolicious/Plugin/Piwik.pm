@@ -1,8 +1,9 @@
 package Mojolicious::Plugin::Piwik;
 use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
+use Mojo::UserAgent;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # Register plugin
 sub register {
@@ -21,13 +22,14 @@ sub register {
   # Add helper
   $mojo->helper(
     piwik_tag => sub {
-      my $c = shift;
 
       # Do not embed
       return '' unless $embed;
 
+      shift;
+
       my $site_id   = shift || $plugin_param->{site_id} || 1;
-      my $piwik_url = shift || $plugin_param->{url};
+      my $piwik_url = shift || $plugin_param->{piwik_url};
 
       # Clear url
       for ($piwik_url) {
@@ -38,6 +40,10 @@ sub register {
 
       # No piwik url
       return '' unless $piwik_url;
+
+      # Todo: See http://piwik.org/docs/javascript-tracking/
+
+      # http://piwik.org/docs/ecommerce-analytics/
 
       # Create piwik tag
       b('<script type="text/javascript">' .
@@ -58,6 +64,73 @@ sub register {
 	'parentNode.insertBefore(g,s)' .
         '}})();' .
 	'</script>');
+    });
+
+  $mojo->helper(
+    piwik_api => sub {
+      my $c = shift;
+      my $method = shift;
+      my $param = shift;
+      my $cb = shift;
+
+      my $piwik_url = delete $param->{piwik_url} || $plugin_param->{piwik_url};
+      my $site_id   = $param->{site_id} ||
+	              $param->{idSite} ||
+                      $plugin_param->{site_id} || 1;
+
+      delete @{$param}{qw/site_id idSite format module method/};
+
+      my $url = Mojo::URL->new($piwik_url);
+      for ($url) {
+	$_->query(module => 'API');
+	$_->query(method => $method);
+	$_->query(format => 'JSON');
+	$_->query(idSite => ref $site_id ? join(',', @$site_id) : $site_id);
+      };
+
+      # Urls as array
+      if ($param->{urls}) {
+	if (ref $param->{urls}) {
+	  my $i = 0;
+	  foreach (@{$param->{urls}}) {
+	    $url->query('urls[' . $i++ . ']' => $_);
+	  };
+	}
+	else {
+	  $url->query(urls => $param->{urls});
+	};
+	delete $param->{urls};
+      };
+
+      # Todo: Range with dates
+      # Todo: Filter
+
+      # Create Mojo::UserAgent
+      my $ua = Mojo::UserAgent->new(max_redirects => 2);
+
+      # Token Auth
+      my $token_auth = delete $param->{token_auth} ||
+	               $plugin_param->{token_auth} || 'anonymous';
+      $url->scheme('https') if $param->{secure};
+
+      # Todo: json errors!
+
+      # Blocking
+      unless ($cb) {
+	my $tx = $ua->get($url);
+	return $tx->res->json if $tx->success;
+	return;
+      }
+
+      # Asynchronous
+      else {
+	$ua->get(
+	  $url => sub {
+	    my ($ua, $tx) = @_;
+	    my $json = $tx->res->json if $tx->success;
+	    $cb->($json);
+	  });
+      };
     });
 };
 
@@ -105,13 +178,13 @@ Piwik Analysis to your Mojolicious app.
 
   # Mojolicious
   $app->plugin(Piwik => {
-    url => 'piwik.sojolicio.us',
+    piwik_url => 'piwik.sojolicio.us',
     site_id => 1
   });
 
   # Mojolicious::Lite
   plugin 'Piwik' => {
-    url => 'piwik.sojolicio.us',
+    piwik_url => 'piwik.sojolicio.us',
     site_id => 1
   };
 
@@ -120,16 +193,23 @@ Accepts the following parameters:
 
 =over 2
 
-=item C<url>
+=item C<piwik_url>
+
 URL of your Piwik instance.
 
 =item C<site_id>
+
 The id of the site to monitor. Defaults to 1.
 
 =item C<embed>
+
 Activates or deactivates the embedding of the script tag.
 Defaults to 1 if Mojolicious is in production mode,
 defaults to 0 otherwise.
+
+=item C<token_auth>
+
+Token for authentication. Used for the Piwik API.
 
 =back
 
@@ -147,6 +227,60 @@ javascript file from your Piwik instance.
 Accepts optionally a site id and the url of your Piwik
 instance. Defaults to the side id and the url of the plugin
 registration.
+
+=head2 C<piwik_api>
+
+  # In Controller - blocking ...
+  my $json = $c->piwik_api(
+    'Actions.getPageUrl' => {
+      token_auth => 'MyToken',
+      idSite => [4,7],
+      period => 'day',
+      date   => 'today'
+    }
+  );
+
+  # ... or async
+  $c->piwik_api(
+    'Actions.getPageUrl' => {
+      token_auth => 'MyToken',
+      idSite => [4,7],
+      period => 'day',
+      date   => 'today'
+    } => sub {
+      my $json = shift;
+      ...
+    }
+  );
+
+Sends a Piwik API request and returns the response as an object
+(the decoded JSON response). Accepts the API method, a hash reference
+with request parameters as described by the
+L<Piwik API|http://piwik.org/docs/analytics-api/reference/>, and
+optionally a callback, if the request is meant to be non-blocking.
+
+In addition to the parameters of the API reference, the following
+parameters are allowed:
+
+=over 2
+
+=item C<piwik_url>
+
+The url of your Piwik instance. Defaults to the url of the plugin
+registration.
+
+=item C<secure>
+
+Boolean value that indicates a request using the https scheme.
+Defaults to false.
+
+=back
+
+C<idSite> is an alias of C<site_id> and defaults to the id
+of the plugin registration.
+Some parameters are allowed to be array references instead of string values,
+for example C<idSite> and C<urls>.
+
 
 =head1 DEPENDENCIES
 

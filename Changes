@@ -1,2 +1,6 @@
+0.02 2012-07-16
+        - Changed piwik to piwik_tag.
+	- Added piwik_api helper.
+
 0.01 2012-07-15
         - Initial submission to GitHub.

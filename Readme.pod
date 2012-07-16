@@ -36,13 +36,13 @@ Piwik Analysis to your Mojolicious app.
 
   # Mojolicious
   $app->plugin(Piwik => {
-    url => 'piwik.sojolicio.us',
+    piwik_url => 'piwik.sojolicio.us',
     site_id => 1
   });
 
   # Mojolicious::Lite
   plugin 'Piwik' => {
-    url => 'piwik.sojolicio.us',
+    piwik_url => 'piwik.sojolicio.us',
     site_id => 1
   };
 
@@ -51,16 +51,23 @@ Accepts the following parameters:
 
 =over 2
 
-=item C<url>
+=item C<piwik_url>
+
 URL of your Piwik instance.
 
 =item C<site_id>
+
 The id of the site to monitor. Defaults to 1.
 
 =item C<embed>
+
 Activates or deactivates the embedding of the script tag.
 Defaults to 1 if Mojolicious is in production mode,
 defaults to 0 otherwise.
+
+=item C<token_auth>
+
+Token for authentication. Used for the Piwik API.
 
 =back
 
@@ -78,6 +85,60 @@ javascript file from your Piwik instance.
 Accepts optionally a site id and the url of your Piwik
 instance. Defaults to the side id and the url of the plugin
 registration.
+
+=head2 C<piwik_api>
+
+  # In Controller - blocking ...
+  my $json = $c->piwik_api(
+    'Actions.getPageUrl' => {
+      token_auth => 'MyToken',
+      idSite => [4,7],
+      period => 'day',
+      date   => 'today'
+    }
+  );
+
+  # ... or async
+  $c->piwik_api(
+    'Actions.getPageUrl' => {
+      token_auth => 'MyToken',
+      idSite => [4,7],
+      period => 'day',
+      date   => 'today'
+    } => sub {
+      my $json = shift;
+      ...
+    }
+  );
+
+Sends a Piwik API request and returns the response as an object
+(the decoded JSON response). Accepts the API method, a hash reference
+with request parameters as described by the
+L<Piwik API|http://piwik.org/docs/analytics-api/reference/>, and
+optionally a callback, if the request is meant to be non-blocking.
+
+In addition to the parameters of the API reference, the following
+parameters are allowed:
+
+=over 2
+
+=item C<piwik_url>
+
+The url of your Piwik instance. Defaults to the url of the plugin
+registration.
+
+=item C<secure>
+
+Boolean value that indicates a request using the https scheme.
+Defaults to false.
+
+=back
+
+C<idSite> is an alias of C<site_id> and defaults to the id
+of the plugin registration.
+Some parameters are allowed to be array references instead of string values,
+for example C<idSite> and C<urls>.
+
 
 =head1 DEPENDENCIES
 
