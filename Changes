@@ -1,3 +1,6 @@
+0.03 2012-10-02
+        - Updated piwik script tag.
+
 0.02 2012-07-16
         - Changed piwik to piwik_tag.
 	- Added piwik_api helper.

@@ -3,7 +3,9 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
-our $VERSION = '0.02';
+
+our $VERSION = '0.03';
+
 
 # Register plugin
 sub register {
@@ -28,65 +30,53 @@ sub register {
 
       shift;
 
-      my $site_id   = shift || $plugin_param->{site_id} || 1;
-      my $piwik_url = shift || $plugin_param->{piwik_url};
+      my $site_id = shift || $plugin_param->{site_id} || 1;
+      my $url     = shift || $plugin_param->{url};
 
       # Clear url
-      for ($piwik_url) {
+      for ($url) {
 	s{^https?://}{}i;
 	s{piwik\.(?:php|js)$}{}i;
 	s{(?<!/)$}{/};
       };
 
       # No piwik url
-      return '' unless $piwik_url;
+      return '' unless $url;
 
       # Todo: See http://piwik.org/docs/javascript-tracking/
 
       # http://piwik.org/docs/ecommerce-analytics/
 
       # Create piwik tag
-      b('<script type="text/javascript">' .
-        'var _paq=_paq||[];' .
-        '(function(){var u=\'http\'+((document.location.protocol==\'https:\')' .
-        "?'s://$piwik_url':'://$piwik_url');".
-        'with(_paq){' .
-	"push(['setSiteId',$site_id]);" .
-        "push(['setTrackerUrl',u+'piwik.php']);" .
-	"push(['trackPageView'])};" .
-	'var d=document,' .
-	'g=d.createElement(\'script\'),' .
-	's=d.getElementsByTagName(\'script\')[0];' .
-	'with(g){' .
-	'type=\'text/javascript\';' .
-	'defer=async=true;' .
-	'src=u+\'piwik.js\';' .
-	'parentNode.insertBefore(g,s)' .
-        '}})();' .
-	'</script>');
+      b(<< "SCRIPTTAG")->squish;
+<script type="text/javascript">var _paq=_paq||[];(function(){var
+u='http'+((document.location.protocol=='https:')?'s':'')+'://$url';
+with(_paq){push(['setSiteId',$site_id]);push(['setTrackerUrl',u+'piwik.php']);
+push(['trackPageView'])};var
+d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];
+with(g){type='text/javascript';defer=async=true;
+src=u+'piwik.js';parentNode.insertBefore(g,s)}})();</script>
+SCRIPTTAG
     });
 
   $mojo->helper(
     piwik_api => sub {
-      my $c = shift;
-      my $method = shift;
-      my $param = shift;
-      my $cb = shift;
+      my ($c, $method, $param, $cb) = @_;
 
-      my $piwik_url = delete $param->{piwik_url} || $plugin_param->{piwik_url};
-      my $site_id   = $param->{site_id} ||
-	              $param->{idSite} ||
-                      $plugin_param->{site_id} || 1;
+      my $url     = delete $param->{url} || $plugin_param->{url};
+      my $site_id = $param->{site_id} ||
+	            $param->{idSite} ||
+                    $plugin_param->{site_id} || 1;
 
       delete @{$param}{qw/site_id idSite format module method/};
 
-      my $url = Mojo::URL->new($piwik_url);
-      for ($url) {
-	$_->query(module => 'API');
-	$_->query(method => $method);
-	$_->query(format => 'JSON');
-	$_->query(idSite => ref $site_id ? join(',', @$site_id) : $site_id);
-      };
+      $url = Mojo::URL->new($url);
+      $url->query(
+	module => 'API',
+	method => $method,
+	format => 'JSON',
+	idSite => ref $site_id ? join(',', @$site_id) : $site_id
+      );
 
       # Urls as array
       if ($param->{urls}) {
@@ -178,13 +168,13 @@ Piwik Analysis to your Mojolicious app.
 
   # Mojolicious
   $app->plugin(Piwik => {
-    piwik_url => 'piwik.sojolicio.us',
+    url => 'piwik.sojolicio.us',
     site_id => 1
   });
 
   # Mojolicious::Lite
   plugin 'Piwik' => {
-    piwik_url => 'piwik.sojolicio.us',
+    url => 'piwik.sojolicio.us',
     site_id => 1
   };
 
@@ -193,7 +183,7 @@ Accepts the following parameters:
 
 =over 2
 
-=item C<piwik_url>
+=item C<url>
 
 URL of your Piwik instance.
 
@@ -264,7 +254,7 @@ parameters are allowed:
 
 =over 2
 
-=item C<piwik_url>
+=item C<url>
 
 The url of your Piwik instance. Defaults to the url of the plugin
 registration.
