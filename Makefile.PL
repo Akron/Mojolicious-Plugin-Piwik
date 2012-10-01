@@ -9,7 +9,7 @@ WriteMakefile(
     NAME         => 'Mojolicious::Plugin::Piwik',
     AUTHOR       => 'Nils Diewald',
     PREREQ_PM => {
-        'Mojolicious' => 3.00
+        'Mojolicious' => 3.43
     },
     test => {TESTS => 't/*.t t/*/*.t t/*/*/*.t t/*/*/*/*.t'}
 );

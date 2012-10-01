@@ -36,13 +36,13 @@ Piwik Analysis to your Mojolicious app.
 
   # Mojolicious
   $app->plugin(Piwik => {
-    piwik_url => 'piwik.sojolicio.us',
+    url => 'piwik.sojolicio.us',
     site_id => 1
   });
 
   # Mojolicious::Lite
   plugin 'Piwik' => {
-    piwik_url => 'piwik.sojolicio.us',
+    url => 'piwik.sojolicio.us',
     site_id => 1
   };
 
@@ -51,7 +51,7 @@ Accepts the following parameters:
 
 =over 2
 
-=item C<piwik_url>
+=item C<url>
 
 URL of your Piwik instance.
 
@@ -122,7 +122,7 @@ parameters are allowed:
 
 =over 2
 
-=item C<piwik_url>
+=item C<url>
 
 The url of your Piwik instance. Defaults to the url of the plugin
 registration.
