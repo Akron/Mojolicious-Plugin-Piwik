@@ -33,15 +33,15 @@ sub register {
       my $site_id = shift || $plugin_param->{site_id} || 1;
       my $url     = shift || $plugin_param->{url};
 
+      # No piwik url
+      return b('<!-- No Piwik-URL given -->') unless $url;
+
       # Clear url
       for ($url) {
 	s{^https?://}{}i;
 	s{piwik\.(?:php|js)$}{}i;
 	s{(?<!/)$}{/};
       };
-
-      # No piwik url
-      return '' unless $url;
 
       # Todo: See http://piwik.org/docs/javascript-tracking/
 
