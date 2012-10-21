@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 
 # Register plugin
@@ -56,6 +56,8 @@ push(['trackPageView'])};var
 d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];
 with(g){type='text/javascript';defer=async=true;
 src=u+'piwik.js';parentNode.insertBefore(g,s)}})();</script>
+<noscript><img src="http://${url}piwik.php?idSite=${site_id}&amp;rec=1" alt=""
+style="border:0" /></noscript>
 SCRIPTTAG
     });
 
