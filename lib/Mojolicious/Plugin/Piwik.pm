@@ -43,19 +43,20 @@ sub register {
 	s{(?<!/)$}{/};
       };
 
-      # Todo: See http://piwik.org/docs/javascript-tracking/
-
+      # Todo:
+      # See http://piwik.org/docs/javascript-tracking/
       # http://piwik.org/docs/ecommerce-analytics/
 
       # Create piwik tag
-      b(<< "SCRIPTTAG")->squish;
+      b(<<"SCRIPTTAG")->squish;
 <script type="text/javascript">var _paq=_paq||[];(function(){var
 u='http'+((document.location.protocol=='https:')?'s':'')+'://$url';
 with(_paq){push(['setSiteId',$site_id]);push(['setTrackerUrl',u+'piwik.php']);
 push(['trackPageView'])};var
 d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];
+if(!s){s=d.getElementsByTagName('head')[0].firstChild};
 with(g){type='text/javascript';defer=async=true;
-src=u+'piwik.js';parentNode.insertBefore(g,s)}})();</script>
+src=u+'piwik.js';s.parentNode.insertBefore(g,s)}})();</script>
 <noscript><img src="http://${url}piwik.php?idSite=${site_id}&amp;rec=1" alt=""
 style="border:0" /></noscript>
 SCRIPTTAG
@@ -67,7 +68,7 @@ SCRIPTTAG
 
       my $url     = delete $param->{url} || $plugin_param->{url};
       my $site_id = $param->{site_id} ||
-	            $param->{idSite} ||
+	            $param->{idSite}  ||
                     $plugin_param->{site_id} || 1;
 
       delete @{$param}{qw/site_id idSite format module method/};
@@ -196,8 +197,8 @@ The id of the site to monitor. Defaults to 1.
 =item C<embed>
 
 Activates or deactivates the embedding of the script tag.
-Defaults to 1 if Mojolicious is in production mode,
-defaults to 0 otherwise.
+Defaults to C<1> if Mojolicious is in production mode,
+defaults to C<0> otherwise.
 
 =item C<token_auth>
 
@@ -217,7 +218,7 @@ Token for authentication. Used for the Piwik API.
 Renders a script tag that asynchronously loads the Piwik
 javascript file from your Piwik instance.
 Accepts optionally a site id and the url of your Piwik
-instance. Defaults to the side id and the url of the plugin
+instance. Defaults to the site id and the url of the plugin
 registration.
 
 =head2 C<piwik_api>

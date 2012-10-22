@@ -62,8 +62,8 @@ The id of the site to monitor. Defaults to 1.
 =item C<embed>
 
 Activates or deactivates the embedding of the script tag.
-Defaults to 1 if Mojolicious is in production mode,
-defaults to 0 otherwise.
+Defaults to C<1> if Mojolicious is in production mode,
+defaults to C<0> otherwise.
 
 =item C<token_auth>
 
@@ -83,7 +83,7 @@ Token for authentication. Used for the Piwik API.
 Renders a script tag that asynchronously loads the Piwik
 javascript file from your Piwik instance.
 Accepts optionally a site id and the url of your Piwik
-instance. Defaults to the side id and the url of the plugin
+instance. Defaults to the site id and the url of the plugin
 registration.
 
 =head2 C<piwik_api>
