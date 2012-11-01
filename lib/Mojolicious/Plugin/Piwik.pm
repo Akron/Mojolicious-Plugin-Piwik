@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 
 # Register plugin
@@ -43,9 +43,8 @@ sub register {
 	s{(?<!/)$}{/};
       };
 
-      # Todo:
-      # See http://piwik.org/docs/javascript-tracking/
-      # http://piwik.org/docs/ecommerce-analytics/
+      # Todo: See http://piwik.org/docs/javascript-tracking/
+      #       http://piwik.org/docs/ecommerce-analytics/
 
       # Create piwik tag
       b(<<"SCRIPTTAG")->squish;
@@ -66,7 +65,12 @@ SCRIPTTAG
     piwik_api => sub {
       my ($c, $method, $param, $cb) = @_;
 
-      my $url     = delete $param->{url} || $plugin_param->{url};
+      my $url        = delete $param->{url} || $plugin_param->{url};
+
+      # Token Auth
+      my $token_auth = delete $param->{token_auth} ||
+	               $plugin_param->{token_auth} || 'anonymous';
+
       my $site_id = $param->{site_id} ||
 	            $param->{idSite}  ||
                     $plugin_param->{site_id} || 1;
@@ -78,7 +82,8 @@ SCRIPTTAG
 	module => 'API',
 	method => $method,
 	format => 'JSON',
-	idSite => ref $site_id ? join(',', @$site_id) : $site_id
+	idSite => ref $site_id ? join(',', @$site_id) : $site_id,
+	token_auth => $token_auth
       );
 
       # Urls as array
@@ -95,16 +100,40 @@ SCRIPTTAG
 	delete $param->{urls};
       };
 
-      # Todo: Range with dates
+      # Range with periods
+      if ($param->{period}) {
+
+	# Delete period
+	my $period = lc(delete $param->{period});
+
+	# Delete date
+	my $date = delete $param->{date};
+
+	# Get range
+	if ($period eq 'range') {
+	  $date = ref $date ? join(',', @$date) : $date;
+	};
+
+	if ($period =~ /^(?:day|week|month|year|range)$/) {
+	  $url->query({
+	    period => $period,
+	    date => $date
+	  });
+	};
+      };
+
+
       # Todo: Filter
 
       # Create Mojo::UserAgent
       my $ua = Mojo::UserAgent->new(max_redirects => 2);
 
-      # Token Auth
-      my $token_auth = delete $param->{token_auth} ||
-	               $plugin_param->{token_auth} || 'anonymous';
       $url->scheme('https') if $param->{secure};
+
+      # Merge query
+      $url->query($param);
+
+      warn $url->to_string;
 
       # Todo: json errors!
 
@@ -115,7 +144,7 @@ SCRIPTTAG
 	return;
       }
 
-      # Asynchronous
+      # Non-Blocking
       else {
 	$ua->get(
 	  $url => sub {
@@ -123,6 +152,7 @@ SCRIPTTAG
 	    my $json = $tx->res->json if $tx->success;
 	    $cb->($json);
 	  });
+	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
       };
     });
 };

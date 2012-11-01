@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 use Test::Mojo;
-use Test::More tests => 11;
+use Test::More;
 use Mojolicious::Lite;
 $|++;
 use lib '../lib';
@@ -11,7 +11,7 @@ my $app = $t->app;
 
 $app->mode('production');
 
-$app->plugin('Piwik' => {
+$app->plugin(Piwik => {
   url => 'sojolicio.us/piwik'
 });
 
@@ -49,3 +49,20 @@ $app->plugin('Piwik' => {
 });
 
 ok(!$app->piwik_tag, 'Development mode');
+
+
+done_testing;
+
+exit;
+
+# Testing the piwik api is hard to do ...
+my $token = '???';
+
+diag $app->dumper($app->piwik_api(
+  'API.get' => {
+    token_auth => $token,
+    url => 'http://grimms-abenteuer.de/piwik/',
+    period => 'day',
+    date => 'yesterday'
+  }
+));
