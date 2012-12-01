@@ -7,6 +7,15 @@ use Mojo::UserAgent;
 our $VERSION = '0.06';
 
 
+# Todo:
+# - Add tracking API support
+#   See http://piwik.org/docs/javascript-tracking/
+# - Add eCommerce support
+#   http://piwik.org/docs/ecommerce-analytics/
+# - Add ImageGraph API support.
+# - Improve error handling.
+
+
 # Register plugin
 sub register {
   my ($plugin, $mojo, $plugin_param) = @_;
@@ -43,9 +52,6 @@ sub register {
 	s{piwik\.(?:php|js)$}{}i;
 	s{(?<!/)$}{/};
       };
-
-      # Todo: See http://piwik.org/docs/javascript-tracking/
-      #       http://piwik.org/docs/ecommerce-analytics/
 
       # Create piwik tag
       b(<<"SCRIPTTAG")->squish;
@@ -202,7 +208,7 @@ Mojolicious::Plugin::Piwik - Use Piwik in Mojolicious
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Piwik> is a simple plugin for embedding
-Piwik Analysis in your Mojolicious app.
+L<Piwik|http://piwik.org/> Analysis in your Mojolicious app.
 
 
 =head1 METHODS
@@ -347,6 +353,8 @@ for example C<idSite> and C<date> (for ranges).
 
 Currently the API requests always expect JSON, so it is not recommended
 for the C<ImageGraph> API.
+The plugin is also limited to the Analysis API and lacks support for
+eCommerce tracking.
 
 
 =head1 TESTING
