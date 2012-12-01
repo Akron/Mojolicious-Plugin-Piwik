@@ -352,9 +352,9 @@ for example C<idSite> and C<date> (for ranges).
     });
 
 
-=head1 LIMITATIONS and BUGS
+=head1 LIMITATIONS
 
-Currently the API requests always expect JSON, so it is not recommended
+Currently the API requests always expect JSON, so it's not recommended
 for the C<ImageGraph> API.
 The plugin is also limited to the Analysis API and lacks support for
 eCommerce tracking.
