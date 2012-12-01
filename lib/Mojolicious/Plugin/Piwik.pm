@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 
 # Register plugin
@@ -21,13 +21,14 @@ sub register {
   my $embed = $plugin_param->{embed} //
     ($mojo->mode eq 'production' ? 1 : 0);
 
-  # Add helper
+  # Add 'piwik_tag' helper
   $mojo->helper(
     piwik_tag => sub {
 
       # Do not embed
       return '' unless $embed;
 
+      # Controller is not needed
       shift;
 
       my $site_id = shift || $plugin_param->{site_id} || 1;
@@ -38,7 +39,7 @@ sub register {
 
       # Clear url
       for ($url) {
-	s{^https?://}{}i;
+	s{^https?:/*}{}i;
 	s{piwik\.(?:php|js)$}{}i;
 	s{(?<!/)$}{/};
       };
@@ -61,22 +62,35 @@ style="border:0" /></noscript>
 SCRIPTTAG
     });
 
+
+  # Add 'piwik_api' helper
   $mojo->helper(
     piwik_api => sub {
       my ($c, $method, $param, $cb) = @_;
 
-      my $url        = delete $param->{url} || $plugin_param->{url};
+      # Get api_test parameter
+      my $api_test = delete $param->{api_test};
+
+      # Get piwik url
+      my $url = delete $param->{url} || $plugin_param->{url};
+
+      $url =~ s{https?://}{}i;
+      $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
+
 
       # Token Auth
       my $token_auth = delete $param->{token_auth} ||
 	               $plugin_param->{token_auth} || 'anonymous';
 
+      # Site id
       my $site_id = $param->{site_id} ||
 	            $param->{idSite}  ||
                     $plugin_param->{site_id} || 1;
 
+      # delete unused parameters
       delete @{$param}{qw/site_id idSite format module method/};
 
+      # Create request method
       $url = Mojo::URL->new($url);
       $url->query(
 	module => 'API',
@@ -91,11 +105,11 @@ SCRIPTTAG
 	if (ref $param->{urls}) {
 	  my $i = 0;
 	  foreach (@{$param->{urls}}) {
-	    $url->query('urls[' . $i++ . ']' => $_);
+	    $url->query({'urls[' . $i++ . ']' => $_});
 	  };
 	}
 	else {
-	  $url->query(urls => $param->{urls});
+	  $url->query({urls => $param->{urls}});
 	};
 	delete $param->{urls};
       };
@@ -104,7 +118,7 @@ SCRIPTTAG
       if ($param->{period}) {
 
 	# Delete period
-	my $period = lc(delete $param->{period});
+	my $period = lc delete $param->{period};
 
 	# Delete date
 	my $date = delete $param->{date};
@@ -122,20 +136,18 @@ SCRIPTTAG
 	};
       };
 
-
-      # Todo: Filter
-
-      # Create Mojo::UserAgent
-      my $ua = Mojo::UserAgent->new(max_redirects => 2);
-
-      $url->scheme('https') if $param->{secure};
+      # Todo: Handle Filter
 
       # Merge query
       $url->query($param);
 
-      warn $url->to_string;
+      # Return string for api testing
+      return $url->to_string if $api_test;
 
-      # Todo: json errors!
+      # Create Mojo::UserAgent
+      my $ua = Mojo::UserAgent->new(max_redirects => 2);
+
+      # Todo: Handle json errors!
 
       # Blocking
       unless ($cb) {
@@ -165,6 +177,8 @@ __END__
 
 =pod
 
+=encoding utf8
+
 =head1 NAME
 
 Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
@@ -173,14 +187,14 @@ Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
 =head1 SYNOPSIS
 
   $app->plugin(Piwik => {
-    url => 'piwik.sojolicio.us',
+    url => 'piwik.khm.li',
     site_id => 1
   });
 
   # Or in your config file
   {
     Piwik => {
-      url => 'piwik.sojolicio.us',
+      url => 'piwik.khm.li',
       site_id => 1
     }
   }
@@ -192,7 +206,7 @@ Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Piwik> is a simple plugin for embedding
-Piwik Analysis to your Mojolicious app.
+Piwik Analysis in your Mojolicious app.
 
 
 =head1 METHODS
@@ -201,13 +215,13 @@ Piwik Analysis to your Mojolicious app.
 
   # Mojolicious
   $app->plugin(Piwik => {
-    url => 'piwik.sojolicio.us',
+    url => 'piwik.khm.li',
     site_id => 1
   });
 
   # Mojolicious::Lite
   plugin 'Piwik' => {
-    url => 'piwik.sojolicio.us',
+    url => 'piwik.khm.li',
     site_id => 1
   };
 
@@ -227,12 +241,12 @@ The id of the site to monitor. Defaults to 1.
 =item C<embed>
 
 Activates or deactivates the embedding of the script tag.
-Defaults to C<1> if Mojolicious is in production mode,
-defaults to C<0> otherwise.
+Defaults to C<true> if Mojolicious is in production mode,
+defaults to C<false> otherwise.
 
 =item C<token_auth>
 
-Token for authentication. Used for the Piwik API.
+Token for authentication. Used only for the Piwik API.
 
 =back
 
@@ -243,13 +257,14 @@ Token for authentication. Used for the Piwik API.
 
   %= piwik_tag
   %= piwik_tag 1
-  %= piwik_tag 1, 'piwik.sojolicio.us'
+  %= piwik_tag 1, 'piwik.khm.li'
 
 Renders a script tag that asynchronously loads the Piwik
 javascript file from your Piwik instance.
 Accepts optionally a site id and the url of your Piwik
-instance. Defaults to the site id and the url of the plugin
-registration.
+instance. Defaults to the site id and the url given when the plugin
+was registered.
+
 
 =head2 C<piwik_api>
 
@@ -276,9 +291,10 @@ registration.
     }
   );
 
-Sends a Piwik API request and returns the response as an object
-(the decoded JSON response). Accepts the API method, a hash reference
-with request parameters as described by the
+Sends a Piwik API request and returns the response as a hash
+or array reference (the decoded JSON response).
+Accepts the API method, a hash reference
+with request parameters as described in the
 L<Piwik API|http://piwik.org/docs/analytics-api/reference/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
@@ -289,12 +305,18 @@ parameters are allowed:
 
 =item C<url>
 
-The url of your Piwik instance. Defaults to the url of the plugin
-registration.
+The url of your Piwik instance.
+Defaults to the url given when the plugin was registered.
 
 =item C<secure>
 
 Boolean value that indicates a request using the https scheme.
+Defaults to false.
+
+=item C<api_test>
+
+Boolean value that indicates a test request, that returns the
+created request url instead of the JSON response.
 Defaults to false.
 
 =back
@@ -302,7 +324,27 @@ Defaults to false.
 C<idSite> is an alias of C<site_id> and defaults to the id
 of the plugin registration.
 Some parameters are allowed to be array references instead of string values,
-for example C<idSite> and C<urls>.
+for example C<idSite> and C<date> (for ranges).
+
+  my $json = $c->piwik_api(
+    'API.get' => {
+      site_id => [4,5],
+      period => 'range',
+      date => ['2012-11-01', '2012-12-01'],
+      secure => 1
+    });
+
+=head1 TESTING
+
+To test the plugin against your piwik instance, create a configuration
+file with the necessary information as a perl data structure in C<t/auth.pl>
+and run C<make test>, for example:
+
+  {
+    token_auth => '123456abcdefghijklmnopqrstuvwxyz',
+    url => 'http://piwik.khm.li/',
+    site_id => 1
+  };
 
 
 =head1 DEPENDENCIES
@@ -321,5 +363,8 @@ Copyright (C) 2012, Nils Diewald.
 
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
+
+This plugin was originally developed for
+L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.
 
 =cut

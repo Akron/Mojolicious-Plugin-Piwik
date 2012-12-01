@@ -1,5 +1,7 @@
 =pod
 
+=encoding utf8
+
 =head1 NAME
 
 Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
@@ -8,14 +10,14 @@ Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
 =head1 SYNOPSIS
 
   $app->plugin(Piwik => {
-    url => 'piwik.sojolicio.us',
+    url => 'piwik.khm.li',
     site_id => 1
   });
 
   # Or in your config file
   {
     Piwik => {
-      url => 'piwik.sojolicio.us',
+      url => 'piwik.khm.li',
       site_id => 1
     }
   }
@@ -27,7 +29,7 @@ Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Piwik> is a simple plugin for embedding
-Piwik Analysis to your Mojolicious app.
+Piwik Analysis in your Mojolicious app.
 
 
 =head1 METHODS
@@ -36,13 +38,13 @@ Piwik Analysis to your Mojolicious app.
 
   # Mojolicious
   $app->plugin(Piwik => {
-    url => 'piwik.sojolicio.us',
+    url => 'piwik.khm.li',
     site_id => 1
   });
 
   # Mojolicious::Lite
   plugin 'Piwik' => {
-    url => 'piwik.sojolicio.us',
+    url => 'piwik.khm.li',
     site_id => 1
   };
 
@@ -62,12 +64,12 @@ The id of the site to monitor. Defaults to 1.
 =item C<embed>
 
 Activates or deactivates the embedding of the script tag.
-Defaults to C<1> if Mojolicious is in production mode,
-defaults to C<0> otherwise.
+Defaults to C<true> if Mojolicious is in production mode,
+defaults to C<false> otherwise.
 
 =item C<token_auth>
 
-Token for authentication. Used for the Piwik API.
+Token for authentication. Used only for the Piwik API.
 
 =back
 
@@ -78,13 +80,14 @@ Token for authentication. Used for the Piwik API.
 
   %= piwik_tag
   %= piwik_tag 1
-  %= piwik_tag 1, 'piwik.sojolicio.us'
+  %= piwik_tag 1, 'piwik.khm.li'
 
 Renders a script tag that asynchronously loads the Piwik
 javascript file from your Piwik instance.
 Accepts optionally a site id and the url of your Piwik
-instance. Defaults to the site id and the url of the plugin
-registration.
+instance. Defaults to the site id and the url given when the plugin
+was registered.
+
 
 =head2 C<piwik_api>
 
@@ -111,9 +114,10 @@ registration.
     }
   );
 
-Sends a Piwik API request and returns the response as an object
-(the decoded JSON response). Accepts the API method, a hash reference
-with request parameters as described by the
+Sends a Piwik API request and returns the response as a hash
+or array reference (the decoded JSON response).
+Accepts the API method, a hash reference
+with request parameters as described in the
 L<Piwik API|http://piwik.org/docs/analytics-api/reference/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
@@ -124,12 +128,18 @@ parameters are allowed:
 
 =item C<url>
 
-The url of your Piwik instance. Defaults to the url of the plugin
-registration.
+The url of your Piwik instance.
+Defaults to the url given when the plugin was registered.
 
 =item C<secure>
 
 Boolean value that indicates a request using the https scheme.
+Defaults to false.
+
+=item C<api_test>
+
+Boolean value that indicates a test request, that returns the
+created request url instead of the JSON response.
 Defaults to false.
 
 =back
@@ -137,7 +147,27 @@ Defaults to false.
 C<idSite> is an alias of C<site_id> and defaults to the id
 of the plugin registration.
 Some parameters are allowed to be array references instead of string values,
-for example C<idSite> and C<urls>.
+for example C<idSite> and C<date> (for ranges).
+
+  my $json = $c->piwik_api(
+    'API.get' => {
+      site_id => [4,5],
+      period => 'range',
+      date => ['2012-11-01', '2012-12-01'],
+      secure => 1
+    });
+
+=head1 TESTING
+
+To test the plugin against your piwik instance, create a configuration
+file with the necessary information as a perl data structure in C<t/auth.pl>
+and run C<make test>, for example:
+
+  {
+    token_auth => '123456abcdefghijklmnopqrstuvwxyz',
+    url => 'http://piwik.khm.li/',
+    site_id => 1
+  };
 
 
 =head1 DEPENDENCIES
@@ -156,5 +186,8 @@ Copyright (C) 2012, Nils Diewald.
 
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
+
+This plugin was originally developed for
+L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.
 
 =cut
