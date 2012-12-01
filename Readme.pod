@@ -179,7 +179,7 @@ eCommerce tracking.
 
 =head1 TESTING
 
-To test the plugin against your piwik instance, create a configuration
+To test the plugin against your Piwik instance, create a configuration
 file with the necessary information as a perl data structure in C<t/auth.pl>
 and run C<make test>, for example:
 

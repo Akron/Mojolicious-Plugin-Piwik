@@ -2,6 +2,7 @@
         - Bugfixing piwik_api.
 	- Further tests for api and live testing.
 	- Improvement of documentation.
+	- Added MANIFEST.
 	- Preparation for CPAN release.
 
 0.05 2012-11-01

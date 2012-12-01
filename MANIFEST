@@ -1,0 +1,6 @@
+lib/Mojolicious/Plugin/Piwik.pm
+t/piwik.t
+Changes
+MANIFEST
+LICENSE
+Makefile.PL
