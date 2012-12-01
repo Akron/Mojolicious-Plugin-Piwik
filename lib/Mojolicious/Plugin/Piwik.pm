@@ -279,6 +279,9 @@ Accepts optionally a site id and the url of your Piwik
 instance. Defaults to the site id and the url given when the plugin
 was registered.
 
+This tag should be included at the bottom
+of the body tag of your website.
+
 
 =head2 C<piwik_api>
 
@@ -349,7 +352,7 @@ for example C<idSite> and C<date> (for ranges).
     });
 
 
-=LIMITATIONS and BUGS
+=head1 LIMITATIONS and BUGS
 
 Currently the API requests always expect JSON, so it is not recommended
 for the C<ImageGraph> API.
