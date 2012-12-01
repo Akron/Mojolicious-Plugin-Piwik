@@ -181,26 +181,22 @@ __END__
 
 =head1 NAME
 
-Mojolicious::Plugin::Piwik - Use Piwik in your Mojolicious app
+Mojolicious::Plugin::Piwik - Use Piwik in Mojolicious
 
 
 =head1 SYNOPSIS
 
-  $app->plugin(Piwik => {
+  # On startup
+  plugin 'Piwik' => {
     url => 'piwik.khm.li',
     site_id => 1
-  });
-
-  # Or in your config file
-  {
-    Piwik => {
-      url => 'piwik.khm.li',
-      site_id => 1
-    }
-  }
+  };
 
   # In Template
   %= piwik_tag
+
+  # In controller
+  my $json = $c->piwik_api('API.getPiwikVersion');
 
 
 =head1 DESCRIPTION
@@ -224,6 +220,15 @@ Piwik Analysis in your Mojolicious app.
     url => 'piwik.khm.li',
     site_id => 1
   };
+
+  # Or in your config file
+  {
+    Piwik => {
+      url => 'piwik.khm.li',
+      site_id => 1
+    }
+  }
+
 
 Called when registering the plugin.
 Accepts the following parameters:
@@ -249,6 +254,9 @@ defaults to C<false> otherwise.
 Token for authentication. Used only for the Piwik API.
 
 =back
+
+All parameters can be set either on registration or
+as part of the configuration file with the key C<Piwik>.
 
 
 =head1 HELPERS
@@ -287,7 +295,7 @@ was registered.
       date   => 'today'
     } => sub {
       my $json = shift;
-      ...
+      # ...
     }
   );
 
@@ -295,7 +303,7 @@ Sends a Piwik API request and returns the response as a hash
 or array reference (the decoded JSON response).
 Accepts the API method, a hash reference
 with request parameters as described in the
-L<Piwik API|http://piwik.org/docs/analytics-api/reference/>, and
+L<Piwik API|http://piwik.org/docs/analytics-api/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
 In addition to the parameters of the API reference, the following
@@ -329,10 +337,17 @@ for example C<idSite> and C<date> (for ranges).
   my $json = $c->piwik_api(
     'API.get' => {
       site_id => [4,5],
-      period => 'range',
-      date => ['2012-11-01', '2012-12-01'],
-      secure => 1
+      period  => 'range',
+      date    => ['2012-11-01', '2012-12-01'],
+      secure  => 1
     });
+
+
+=LIMITATIONS and BUGS
+
+Currently the API requests always expect JSON, so it is not recommended
+for the C<ImageGraph> API.
+
 
 =head1 TESTING
 
@@ -364,7 +379,7 @@ Copyright (C) 2012, Nils Diewald.
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
 
-This plugin was originally developed for
+This plugin was developed for
 L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.
 
 =cut
