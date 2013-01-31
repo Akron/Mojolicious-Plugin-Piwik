@@ -213,6 +213,10 @@ L<Piwik|http://piwik.org/> Analysis in your Mojolicious app.
 
 =head1 METHODS
 
+L<Mojolicious::Plugin::Piwik> inherits all methods from
+L<Mojolicious::Plugin> and implements the following new ones.
+
+
 =head2 C<register>
 
   # Mojolicious
