@@ -30,6 +30,10 @@ L<Piwik|http://piwik.org/> Analysis in your Mojolicious app.
 
 =head1 METHODS
 
+L<Mojolicious::Plugin::Piwik> inherits all methods from
+L<Mojolicious::Plugin> and implements the following new ones.
+
+
 =head2 C<register>
 
   # Mojolicious
@@ -202,7 +206,7 @@ L<Mojolicious>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012, Nils Diewald.
+Copyright (C) 2012-2013, Nils Diewald.
 
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
