@@ -34,7 +34,7 @@ L<Mojolicious::Plugin::Piwik> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
 
-=head2 C<register>
+=head2 register
 
   # Mojolicious
   $app->plugin(Piwik => {
@@ -88,7 +88,7 @@ as part of the configuration file with the key C<Piwik>.
 
 =head1 HELPERS
 
-=head2 C<piwik_tag>
+=head2 piwik_tag
 
   %= piwik_tag
   %= piwik_tag 1
@@ -104,7 +104,7 @@ This tag should be included at the bottom
 of the body tag of your website.
 
 
-=head2 C<piwik_api>
+=head2 piwik_api
 
   # In Controller - blocking ...
   my $json = $c->piwik_api(
