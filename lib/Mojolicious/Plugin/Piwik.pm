@@ -10,6 +10,8 @@ our $VERSION = '0.09';
 # Todo:
 # - Add tracking API support
 #   See http://piwik.org/docs/javascript-tracking/
+#   Use $c->piwik_api(Track => {}) for the tracking api
+#   http://piwik.org/docs/tracking-api/reference/
 # - Add eCommerce support
 #   http://piwik.org/docs/ecommerce-analytics/
 # - Add ImageGraph API support.
