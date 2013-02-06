@@ -3,9 +3,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
-
 our $VERSION = '0.09';
-
 
 # Todo:
 # - Add tracking API support
@@ -29,6 +27,7 @@ sub register {
     $plugin_param = { %$config_param, %$plugin_param };
   };
 
+  # Embed tag
   my $embed = $plugin_param->{embed} //
     ($mojo->mode eq 'production' ? 1 : 0);
 
@@ -108,14 +107,18 @@ SCRIPTTAG
 	token_auth => $token_auth
       );
 
-      # Urls as array
+      # Urls
       if ($param->{urls}) {
+
+	# Urls is arrayref
 	if (ref $param->{urls}) {
 	  my $i = 0;
 	  foreach (@{$param->{urls}}) {
-	    $url->query({'urls[' . $i++ . ']' => $_});
+	    $url->query({ 'urls[' . $i++ . ']' => $_ });
 	  };
 	}
+
+	# Urls as string
 	else {
 	  $url->query({urls => $param->{urls}});
 	};
@@ -136,10 +139,10 @@ SCRIPTTAG
 	  $date = ref $date ? join(',', @$date) : $date;
 	};
 
-	if ($period =~ /^(?:day|week|month|year|range)$/) {
+	if ($period =~ m/^(?:day|week|month|year|range)$/) {
 	  $url->query({
 	    period => $period,
-	    date => $date
+	    date   => $date
 	  });
 	};
       };
@@ -391,7 +394,7 @@ L<Mojolicious>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012-2013, Nils Diewald.
+Copyright (C) 2012-2013, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
