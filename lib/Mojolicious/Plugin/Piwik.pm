@@ -81,8 +81,31 @@ SCRIPTTAG
       # Get piwik url
       my $url = delete $param->{url} || $plugin_param->{url};
 
-      $url =~ s{https?://}{}i;
+      $url =~ s{^https?://}{}i;
       $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
+
+      # Tracking API
+      if (lc $method eq 'track') {
+
+	# Request Headers
+	my $header = $c->req->headers;
+
+	# Respect do not track
+	return if $header->dnt;
+
+	# Set default values
+	for ($param)  {
+	  $_->{ua} //= $header->user_agent if $header->user_agent;
+	  $_->{urlref} //= $header->referrer if $header->referrer;
+	  $_->{rand} = int(rand(10_000));
+	  $_->{rec} = 1;
+	  $_->{apiv} = 1;
+	  $_->{url} //= $c->url_for->to_abs;
+
+	  # Todo: maybe make optional with parameter
+	  # $_->{_id} = rand ...
+	};
+      };
 
 
       # Token Auth
@@ -250,23 +273,23 @@ Accepts the following parameters:
 
 =over 2
 
-=item C<url>
+=item
 
-URL of your Piwik instance.
+C<url> - URL of your Piwik instance.
 
-=item C<site_id>
+=item
 
-The id of the site to monitor. Defaults to 1.
+C<site_id> - The id of the site to monitor. Defaults to 1.
 
-=item C<embed>
+=item
 
-Activates or deactivates the embedding of the script tag.
+C<embed> - Activates or deactivates the embedding of the script tag.
 Defaults to C<true> if Mojolicious is in production mode,
 defaults to C<false> otherwise.
 
-=item C<token_auth>
+=item
 
-Token for authentication. Used only for the Piwik API.
+C<token_auth> - Token for authentication. Used only for the Piwik API.
 
 =back
 
