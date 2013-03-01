@@ -84,6 +84,18 @@ SCRIPTTAG
       $url =~ s{^https?://}{}i;
       $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
 
+      # Create request URL
+      $url = Mojo::URL->new($url);
+
+      # Site id
+      my $site_id = $param->{site_id} ||
+	            $param->{idSite}  ||
+	            $param->{idsite}  ||
+                    $plugin_param->{site_id} || 1;
+
+      # delete unused parameters
+      delete @{$param}{qw/site_id idSite idsite format module method/};
+
       # Tracking API
       if (lc $method eq 'track') {
 
@@ -95,78 +107,81 @@ SCRIPTTAG
 
 	# Set default values
 	for ($param)  {
-	  $_->{ua} //= $header->user_agent if $header->user_agent;
+	  $_->{ua}     //= $header->user_agent if $header->user_agent;
 	  $_->{urlref} //= $header->referrer if $header->referrer;
-	  $_->{rand} = int(rand(10_000));
-	  $_->{rec} = 1;
-	  $_->{apiv} = 1;
-	  $_->{url} //= $c->url_for->to_abs;
+	  $_->{rand}     = int(rand(10_000));
+	  $_->{rec}      = 1;
+	  $_->{apiv}     = 1;
+	  $_->{url}    //= $c->url_for()->to_abs;
 
 	  # Todo: maybe make optional with parameter
 	  # $_->{_id} = rand ...
 	};
-      };
 
+	# Resolution
+	if ($param->{res} && ref $param->{res}) {
+	  $param->{res} = join 'x', @{$param->{res}}[0,1];
+	};
 
-      # Token Auth
-      my $token_auth = delete $param->{token_auth} ||
-	               $plugin_param->{token_auth} || 'anonymous';
+	$url->query(
+	  idsite => ref $site_id ? $site_id->[0] : $site_id
+	);
+      }
 
-      # Site id
-      my $site_id = $param->{site_id} ||
-	            $param->{idSite}  ||
-                    $plugin_param->{site_id} || 1;
+      # Analysis API
+      else {
 
-      # delete unused parameters
-      delete @{$param}{qw/site_id idSite format module method/};
+	# Token Auth
+	my $token_auth = delete $param->{token_auth} ||
+	                 $plugin_param->{token_auth} || 'anonymous';
 
-      # Create request method
-      $url = Mojo::URL->new($url);
-      $url->query(
-	module => 'API',
-	method => $method,
-	format => 'JSON',
-	idSite => ref $site_id ? join(',', @$site_id) : $site_id,
-	token_auth => $token_auth
-      );
+	# Create request method
+	$url->query(
+	  module => 'API',
+	  method => $method,
+	  format => 'JSON',
+	  idSite => ref $site_id ? join(',', @$site_id) : $site_id,
+	  token_auth => $token_auth
+	);
 
-      # Urls
-      if ($param->{urls}) {
+	# Urls
+	if ($param->{urls}) {
 
-	# Urls is arrayref
-	if (ref $param->{urls}) {
-	  my $i = 0;
-	  foreach (@{$param->{urls}}) {
-	    $url->query({ 'urls[' . $i++ . ']' => $_ });
+	  # Urls is arrayref
+	  if (ref $param->{urls}) {
+	    my $i = 0;
+	    foreach (@{$param->{urls}}) {
+	      $url->query({ 'urls[' . $i++ . ']' => $_ });
+	    };
+	  }
+
+	  # Urls as string
+	  else {
+	    $url->query({urls => $param->{urls}});
 	  };
-	}
-
-	# Urls as string
-	else {
-	  $url->query({urls => $param->{urls}});
-	};
-	delete $param->{urls};
-      };
-
-      # Range with periods
-      if ($param->{period}) {
-
-	# Delete period
-	my $period = lc delete $param->{period};
-
-	# Delete date
-	my $date = delete $param->{date};
-
-	# Get range
-	if ($period eq 'range') {
-	  $date = ref $date ? join(',', @$date) : $date;
+	  delete $param->{urls};
 	};
 
-	if ($period =~ m/^(?:day|week|month|year|range)$/) {
-	  $url->query({
-	    period => $period,
-	    date   => $date
-	  });
+	# Range with periods
+	if ($param->{period}) {
+
+	  # Delete period
+	  my $period = lc delete $param->{period};
+
+	  # Delete date
+	  my $date = delete $param->{date};
+
+	  # Get range
+	  if ($period eq 'range') {
+	    $date = ref $date ? join(',', @$date) : $date;
+	  };
+
+	  if ($period =~ m/^(?:day|week|month|year|range)$/) {
+	    $url->query({
+	      period => $period,
+	      date   => $date
+	    });
+	  };
 	};
       };
 
@@ -347,33 +362,44 @@ with request parameters as described in the
 L<Piwik API|http://piwik.org/docs/analytics-api/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
+To request the L<Tracking API|http://piwik.org/docs/tracking-api/reference/>
+use the method name C<Track>.
+
+  $c->piwik_api(
+    Track => {
+      idsite => '4',
+      res    => [1024, 768]
+    });
+
+The Tracking API will forward user agent and referrer information
+as well as the URL of the requested resource.
+
 In addition to the parameters of the API reference, the following
 parameters are allowed:
 
 =over 2
 
-=item C<url>
+=item
 
-The url of your Piwik instance.
+C<url> - The url of your Piwik instance.
 Defaults to the url given when the plugin was registered.
 
-=item C<secure>
+=item
 
-Boolean value that indicates a request using the https scheme.
+C<secure> - Boolean value that indicates a request using the https scheme.
 Defaults to false.
 
-=item C<api_test>
+=item
 
-Boolean value that indicates a test request, that returns the
-created request url instead of the JSON response.
-Defaults to false.
+C<api_test> - Boolean value that indicates a test request, that returns the
+created request url instead of the JSON response. Defaults to false.
 
 =back
 
-C<idSite> is an alias of C<site_id> and defaults to the id
+C<idSite> is an alias of C<site_id> and C<idsite> and defaults to the id
 of the plugin registration.
 Some parameters are allowed to be array references instead of string values,
-for example C<idSite> and C<date> (for ranges).
+for example C<idSite> (for analysis), C<date> (for ranges) and C<res> (for tracking).
 
   my $json = $c->piwik_api(
     'API.get' => {
@@ -388,8 +414,7 @@ for example C<idSite> and C<date> (for ranges).
 
 Currently the API requests always expect JSON, so it's not recommended
 for the C<ImageGraph> API.
-The plugin is also limited to the Analysis API and lacks support for
-eCommerce tracking.
+The plugin lacks support for eCommerce tracking.
 
 
 =head1 TESTING

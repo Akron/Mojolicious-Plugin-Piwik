@@ -77,6 +77,28 @@ like($url, qr{urls%5B0%5D=http:\/\/grimms-abenteuer\.de/}, 'Piwik API 9');
 like($url, qr{urls%5B1%5D=http:\/\/khm\.li/}, 'Piwik API 10');
 like($url, qr{idSite=4,5}, 'Piwik API 11');
 
+# Tracking API
+my $c = Mojolicious::Controller->new;
+$c->app($app);
+for ($c->req->headers) {
+  $_->user_agent('Firefox');
+  $_->referrer('http://khm.li/');
+};
+
+my $track = $c->piwik_api(
+  Track => {
+    idsite => '4',
+    api_test => 1,
+    res => [1024, 768]
+  });
+
+like($track, qr{idsite=4}, 'Tracking 1');
+like($track, qr{ua=Firefox}, 'Tracking 1');
+like($track, qr{rec=1}, 'Tracking 1');
+like($track, qr{urlref=http://khm\.li/}, 'Tracking 1');
+like($track, qr{res=1024x768}, 'Tracking 1');
+
+
 # Life tests:
 # Testing the piwik api is hard to do ...
 my (%param, $f);
@@ -186,5 +208,7 @@ is($sd->[3], 0, 'getMultiArray 6');
 is($sd->[4], 152, 'getMultiArray 7');
 is($sd->[5], 'test', 'getMultiArray 8');
 is($sd->[6]->{42}, 'end', 'getMultiArray 9');
+
+
 
 done_testing;
