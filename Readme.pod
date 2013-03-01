@@ -26,6 +26,8 @@ Mojolicious::Plugin::Piwik - Use Piwik in Mojolicious
 
 L<Mojolicious::Plugin::Piwik> is a simple plugin for embedding
 L<Piwik|http://piwik.org/> Analysis in your Mojolicious app.
+Please respect the privacy of your visitors and do not track
+more information than necessary!
 
 
 =head1 METHODS
@@ -103,6 +105,20 @@ was registered.
 This tag should be included at the bottom
 of the body tag of your website.
 
+  %= piwik_tag 'opt-out', width => 400
+
+The special C<opt-out> tag renders an iframe helping
+your visitors to disallow tracking via javascript.
+See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
+for explanation of usage.
+
+  <%= piwik_tag 'opt-out-link', begin %>Opt Out<% end %>
+  # <a href="..." rel="nofollow">Opt Out</a>
+
+The special C<opt-out-link> renders an anchor link
+to the opt-out page to be used if the visitor does
+not allow third party cookies.
+
 
 =head2 piwik_api
 
@@ -129,40 +145,58 @@ of the body tag of your website.
     }
   );
 
-Sends a Piwik API request and returns the response as a hash
+Sends an API request and returns the response as a hash
 or array reference (the decoded JSON response).
 Accepts the API method, a hash reference
 with request parameters as described in the
 L<Piwik API|http://piwik.org/docs/analytics-api/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
-In addition to the parameters of the API reference, the following
+The L<Tracking API|http://piwik.org/docs/tracking-api/reference/>
+uses the method name C<Track> and will forward user agent and
+referrer information based on the controller request as well as the
+url of the requested resource, unless Do-Not-Track is activated.
+The ip address is not forwarded.
+
+  $c->piwik_api(
+    Track => {
+      idsite => '4',
+      res    => [1024, 768],
+      action_url  => 'http://khm.li/12',
+      action_name => 'Märchen/Rapunzel'
+    });
+
+As the C<url> parameter is used to define the Piwik instance,
+the url of the requested resource to be named C<action_url>.
+
+Please remember that cookie-based opt-out can't be supported.
+
+In addition to the parameters of the API references, the following
 parameters are allowed:
 
 =over 2
 
-=item C<url>
+=item
 
-The url of your Piwik instance.
+C<url> - The url of your Piwik instance.
 Defaults to the url given when the plugin was registered.
 
-=item C<secure>
+=item
 
-Boolean value that indicates a request using the https scheme.
+C<secure> - Boolean value that indicates a request using the https scheme.
 Defaults to false.
 
-=item C<api_test>
+=item
 
-Boolean value that indicates a test request, that returns the
-created request url instead of the JSON response.
-Defaults to false.
+C<api_test> - Boolean value that indicates a test request, that returns the
+created request url instead of the JSON response. Defaults to false.
 
 =back
 
-C<idSite> is an alias of C<site_id> and defaults to the id
+C<idSite> is an alias of C<site_id> and C<idsite> and defaults to the id
 of the plugin registration.
 Some parameters are allowed to be array references instead of string values,
-for example C<idSite> and C<date> (for ranges).
+for example C<idSite> (for analysis), C<date> (for ranges) and C<res> (for tracking).
 
   my $json = $c->piwik_api(
     'API.get' => {
@@ -172,13 +206,16 @@ for example C<idSite> and C<date> (for ranges).
       secure  => 1
     });
 
+In case of an error, C<piwik_api> tries to response with a meaningsful
+descriptin in the hash value of C<error>.
+If an image is expected instead of a JSON object
+(as for the Tracking or the C<ImageGraph> API), the image is base64
+encoded and mime-type prefixed in the hash value of image.
+
 
 =head1 LIMITATIONS
 
-Currently the API requests always expect JSON, so it's not recommended
-for the C<ImageGraph> API.
-The plugin is also limited to the Analysis API and lacks support for
-eCommerce tracking.
+The plugin lacks support for eCommerce tracking.
 
 
 =head1 TESTING
@@ -190,8 +227,12 @@ and run C<make test>, for example:
   {
     token_auth => '123456abcdefghijklmnopqrstuvwxyz',
     url => 'http://piwik.khm.li/',
-    site_id => 1
+    site_id => 1,
+    action_url => 'http://khm.li/Test',
+    action_name => 'Märchen/Test'
   };
+
+The user agent to be ignored is called C<Mojo-Test>.
 
 
 =head1 DEPENDENCIES
@@ -210,6 +251,11 @@ Copyright (C) 2012-2013, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
+
+Please make sure you are using Piwik in compliance to the law.
+For german users,
+L<this information|https://www.datenschutzzentrum.de/tracking/piwik/>
+may help you to design your service correctly.
 
 This plugin was developed for
 L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.

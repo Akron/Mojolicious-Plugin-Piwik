@@ -6,13 +6,12 @@ use Mojo::UserAgent;
 our $VERSION = '0.09';
 
 # Todo:
-# - Add tracking API support
+# - Better test tracking API support
 #   See http://piwik.org/docs/javascript-tracking/
-#   Use $c->piwik_api(Track => {}) for the tracking api
 #   http://piwik.org/docs/tracking-api/reference/
+# - Support custom values in tracking api.
 # - Add eCommerce support
 #   http://piwik.org/docs/ecommerce-analytics/
-# - Add ImageGraph API support.
 # - Improve error handling.
 
 
@@ -38,8 +37,25 @@ sub register {
       # Do not embed
       return '' unless $embed;
 
-      # Controller is not needed
-      shift;
+      # Controller
+      my $c = shift;
+
+      # Use opt-out tag
+      my %opt;
+      if ($_[0] && index(lc $_[0], 'opt-out') == 0) {
+	my $opt_out = shift;
+
+	# Get iframe content
+	my $cb = ref $_[-1] eq 'CODE' ? pop : 0;
+
+	# Accept parameters
+	%opt = @_;
+	$opt{out} = $opt_out;
+	$opt{cb}  = $cb;
+
+	# Empty arguments
+	@_ = ();
+      };
 
       my $site_id = shift || $plugin_param->{site_id} || 1;
       my $url     = shift || $plugin_param->{url};
@@ -52,6 +68,30 @@ sub register {
 	s{^https?:/*}{}i;
 	s{piwik\.(?:php|js)$}{}i;
 	s{(?<!/)$}{/};
+      };
+
+      # Render opt-out tag
+      if (my $opt_out = delete $opt{out}) {
+
+	# Get protocol
+	my $req_url = $c->req->url;
+	my $prot = $req_url->scheme ? lc $req_url->scheme : 'http';
+
+	my $cb = delete $opt{cb};
+	my $oo_url = "${prot}://${url}index.php?module=CoreAdminHome&action=optOut";
+
+	if ($opt_out eq 'opt-out-link') {
+	  $opt{href} = $oo_url;
+	  $opt{rel} //= 'nofollow';
+	  return $c->tag('a', %opt, ($cb || sub { 'Piwik Opt-Out' }));
+	};
+
+	$opt{src} = $oo_url;
+	$opt{width}  ||= '600px';
+	$opt{height} ||= '200px';
+	$opt{frameborder} ||= 'no';
+
+	return $c->tag('iframe', %opt, ($cb || sub { '' }));
       };
 
       # Create piwik tag
@@ -96,8 +136,14 @@ SCRIPTTAG
       # delete unused parameters
       delete @{$param}{qw/site_id idSite idsite format module method/};
 
+      # Token Auth
+      my $token_auth = delete $param->{token_auth} ||
+	               $plugin_param->{token_auth} || 'anonymous';
+
       # Tracking API
       if (lc $method eq 'track') {
+
+	$url->path('piwik.php');
 
 	# Request Headers
 	my $header = $c->req->headers;
@@ -112,7 +158,7 @@ SCRIPTTAG
 	  $_->{rand}     = int(rand(10_000));
 	  $_->{rec}      = 1;
 	  $_->{apiv}     = 1;
-	  $_->{url}    //= $c->url_for()->to_abs;
+	  $_->{url}      = delete $_->{action_url} || $c->url_for->to_abs;
 
 	  # Todo: maybe make optional with parameter
 	  # $_->{_id} = rand ...
@@ -120,20 +166,19 @@ SCRIPTTAG
 
 	# Resolution
 	if ($param->{res} && ref $param->{res}) {
-	  $param->{res} = join 'x', @{$param->{res}}[0,1];
+	  $param->{res} = join 'x', @{$param->{res}}[0, 1];
 	};
 
 	$url->query(
-	  idsite => ref $site_id ? $site_id->[0] : $site_id
+	  idsite => ref $site_id ? $site_id->[0] : $site_id,
+	  format => 'JSON'
 	);
+
+	$url->query({token_auth => $token_auth}) if $token_auth;
       }
 
       # Analysis API
       else {
-
-	# Token Auth
-	my $token_auth = delete $param->{token_auth} ||
-	                 $plugin_param->{token_auth} || 'anonymous';
 
 	# Create request method
 	$url->query(
@@ -201,7 +246,9 @@ SCRIPTTAG
       # Blocking
       unless ($cb) {
 	my $tx = $ua->get($url);
-	return $tx->res->json if $tx->success;
+
+	return _treat_response($tx->res) if $tx->success;
+
 	return;
       }
 
@@ -210,12 +257,44 @@ SCRIPTTAG
 	$ua->get(
 	  $url => sub {
 	    my ($ua, $tx) = @_;
-	    my $json = $tx->res->json if $tx->success;
+
+	    my $json = {};
+	    $json = _treat_response($tx->res) if $tx->success;
+
 	    $cb->($json);
 	  });
 	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
       };
     });
+};
+
+sub _treat_response {
+  my $res = shift;
+  my $ct = $res->headers->content_type;
+
+  if (index($ct, 'json') >= 0) {
+    return $res->json;
+  }
+
+  elsif (index($ct, 'html') >= 0) {
+
+    # Find error message in html
+    my $found = $res->dom->at('#contentsimple > p');
+
+    # Return unknown error
+    return { error => 'unknown' } unless $found;
+
+    # Return error message as json
+    return { error => $found->all_text };
+  }
+
+  elsif ($ct =~ m{^image/(gif|jpe?g)}) {
+    return {
+      image => 'data:image/' . $1 . ';base64,' . b($res->body)->b64_encode
+    };
+  };
+
+  return { error => 'Unknown response type' };
 };
 
 
@@ -252,6 +331,8 @@ Mojolicious::Plugin::Piwik - Use Piwik in Mojolicious
 
 L<Mojolicious::Plugin::Piwik> is a simple plugin for embedding
 L<Piwik|http://piwik.org/> Analysis in your Mojolicious app.
+Please respect the privacy of your visitors and do not track
+more information than necessary!
 
 
 =head1 METHODS
@@ -329,6 +410,20 @@ was registered.
 This tag should be included at the bottom
 of the body tag of your website.
 
+  %= piwik_tag 'opt-out', width => 400
+
+The special C<opt-out> tag renders an iframe helping
+your visitors to disallow tracking via javascript.
+See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
+for explanation of usage.
+
+  <%= piwik_tag 'opt-out-link', begin %>Opt Out<% end %>
+  # <a href="..." rel="nofollow">Opt Out</a>
+
+The special C<opt-out-link> renders an anchor link
+to the opt-out page to be used if the visitor does
+not allow third party cookies.
+
 
 =head2 piwik_api
 
@@ -355,26 +450,33 @@ of the body tag of your website.
     }
   );
 
-Sends a Piwik API request and returns the response as a hash
+Sends an API request and returns the response as a hash
 or array reference (the decoded JSON response).
 Accepts the API method, a hash reference
 with request parameters as described in the
 L<Piwik API|http://piwik.org/docs/analytics-api/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
-To request the L<Tracking API|http://piwik.org/docs/tracking-api/reference/>
-use the method name C<Track>.
+The L<Tracking API|http://piwik.org/docs/tracking-api/reference/>
+uses the method name C<Track> and will forward user agent and
+referrer information based on the controller request as well as the
+url of the requested resource, unless Do-Not-Track is activated.
+The ip address is not forwarded.
 
   $c->piwik_api(
     Track => {
       idsite => '4',
-      res    => [1024, 768]
+      res    => [1024, 768],
+      action_url  => 'http://khm.li/12',
+      action_name => 'Märchen/Rapunzel'
     });
 
-The Tracking API will forward user agent and referrer information
-as well as the URL of the requested resource.
+As the C<url> parameter is used to define the Piwik instance,
+the url of the requested resource to be named C<action_url>.
 
-In addition to the parameters of the API reference, the following
+Please remember that cookie-based opt-out can't be supported.
+
+In addition to the parameters of the API references, the following
 parameters are allowed:
 
 =over 2
@@ -409,11 +511,15 @@ for example C<idSite> (for analysis), C<date> (for ranges) and C<res> (for track
       secure  => 1
     });
 
+In case of an error, C<piwik_api> tries to response with a meaningsful
+descriptin in the hash value of C<error>.
+If an image is expected instead of a JSON object
+(as for the Tracking or the C<ImageGraph> API), the image is base64
+encoded and mime-type prefixed in the hash value of image.
+
 
 =head1 LIMITATIONS
 
-Currently the API requests always expect JSON, so it's not recommended
-for the C<ImageGraph> API.
 The plugin lacks support for eCommerce tracking.
 
 
@@ -426,8 +532,12 @@ and run C<make test>, for example:
   {
     token_auth => '123456abcdefghijklmnopqrstuvwxyz',
     url => 'http://piwik.khm.li/',
-    site_id => 1
+    site_id => 1,
+    action_url => 'http://khm.li/Test',
+    action_name => 'Märchen/Test'
   };
+
+The user agent to be ignored is called C<Mojo-Test>.
 
 
 =head1 DEPENDENCIES
@@ -446,6 +556,11 @@ Copyright (C) 2012-2013, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it
 and/or modify it under the same terms as Perl.
+
+Please make sure you are using Piwik in compliance to the law.
+For german users,
+L<this information|https://www.datenschutzzentrum.de/tracking/piwik/>
+may help you to design your service correctly.
 
 This plugin was developed for
 L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.

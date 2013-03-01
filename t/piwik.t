@@ -3,6 +3,7 @@ use Test::Mojo;
 use Test::More;
 use Mojolicious::Lite;
 use Mojo::JSON;
+use Data::Dumper;
 use utf8;
 
 $|++;
@@ -77,28 +78,6 @@ like($url, qr{urls%5B0%5D=http:\/\/grimms-abenteuer\.de/}, 'Piwik API 9');
 like($url, qr{urls%5B1%5D=http:\/\/khm\.li/}, 'Piwik API 10');
 like($url, qr{idSite=4,5}, 'Piwik API 11');
 
-# Tracking API
-my $c = Mojolicious::Controller->new;
-$c->app($app);
-for ($c->req->headers) {
-  $_->user_agent('Firefox');
-  $_->referrer('http://khm.li/');
-};
-
-my $track = $c->piwik_api(
-  Track => {
-    idsite => '4',
-    api_test => 1,
-    res => [1024, 768]
-  });
-
-like($track, qr{idsite=4}, 'Tracking 1');
-like($track, qr{ua=Firefox}, 'Tracking 1');
-like($track, qr{rec=1}, 'Tracking 1');
-like($track, qr{urlref=http://khm\.li/}, 'Tracking 1');
-like($track, qr{res=1024x768}, 'Tracking 1');
-
-
 # Life tests:
 # Testing the piwik api is hard to do ...
 my (%param, $f);
@@ -158,11 +137,11 @@ my $array = $app->piwik_api(
   }
 );
 
-is($array->[0]->[0], 'piwik', 'API.getDescriptionArray 1');
-is($array->[1]->[0], 'open source', 'API.getDescriptionArray 2');
-is($array->[2]->[0], 'web analytics', 'API.getDescriptionArray 3');
-is($array->[3]->[0], 'free', 'API.getDescriptionArray 4');
-is($array->[4]->[0], 'Strong message: Свободный Тибет',
+is($array->[0], 'piwik', 'API.getDescriptionArray 1');
+is($array->[1], 'open source', 'API.getDescriptionArray 2');
+is($array->[2], 'web analytics', 'API.getDescriptionArray 3');
+is($array->[3], 'free', 'API.getDescriptionArray 4');
+is($array->[4], 'Strong message: Свободный Тибет',
    'API.getDescriptionArray 5');
 
 my $table = $app->piwik_api(
