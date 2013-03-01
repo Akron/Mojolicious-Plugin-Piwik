@@ -118,6 +118,8 @@ for explanation of usage.
 The special C<opt-out-link> renders an anchor link
 to the opt-out page to be used if the visitor does
 not allow third party cookies.
+See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
+for explanation of usage.
 
 
 =head2 piwik_api

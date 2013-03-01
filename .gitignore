@@ -1,4 +1,5 @@
 t/auth.pl
+t/-auth.pl
 blib
 log
 Sandbox
