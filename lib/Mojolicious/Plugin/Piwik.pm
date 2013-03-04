@@ -266,6 +266,15 @@ SCRIPTTAG
 	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
       };
     });
+
+
+  $mojo->helper(
+    piwik_widget => sub {
+      my $c = shift;
+      # http://piwik.org/docs/embed-piwik-report/
+      # <div id="widgetIframe"><iframe width="100%" height="350" src="http://grimms-abenteuer.de/piwik/index.php?module=Widgetize&action=iframe&columns[]=nb_visits&widget=1&moduleToWidgetize=VisitsSummary&actionToWidgetize=getEvolutionGraph&idSite=3&period=range&date=last30&disableLink=1&widget=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>
+    }
+  );
 };
 
 sub _treat_response {
