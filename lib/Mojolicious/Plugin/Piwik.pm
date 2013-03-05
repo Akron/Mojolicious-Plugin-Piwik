@@ -451,8 +451,7 @@ not allow third party cookies.
 See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
 for explanation of usage.
 
-B<The 'opt-out' and 'opt-out-url' options are
-EXPERIMENTAL and may change in further releases!>
+B<The 'opt-out' and 'opt-out-link' options are EXPERIMENTAL and may change in further releases!>
 
 
 =head2 piwik_api
@@ -610,7 +609,7 @@ and/or modify it under the same terms as Perl.
 Please make sure you are using Piwik in compliance to the law.
 For german users,
 L<this information|https://www.datenschutzzentrum.de/tracking/piwik/>
-[last accessed on 2013-03-03]
+(last accessed on 2013-03-03)
 may help you to design your service correctly.
 
 This plugin was developed for
