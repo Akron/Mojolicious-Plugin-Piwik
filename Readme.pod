@@ -122,6 +122,9 @@ not allow third party cookies.
 See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
 for explanation of usage.
 
+B<The 'opt-out' and 'opt-out-url' options are
+EXPERIMENTAL and may change in further releases!>
+
 
 =head2 piwik_api
 
@@ -190,11 +193,6 @@ Defaults to the url given when the plugin was registered.
 C<secure> - Boolean value that indicates a request using the https scheme.
 Defaults to false.
 
-=item
-
-C<api_test> - Boolean value that indicates a test request, that returns the
-created request url instead of the JSON response. Defaults to false.
-
 =back
 
 C<idSite> is an alias of C<site_id> and C<idsite> and defaults to the id
@@ -216,6 +214,29 @@ If an image is expected instead of a JSON object
 (as for the Tracking or the C<ImageGraph> API), the image is base64
 encoded and mime-type prefixed in the hash value of C<image>,
 ready to be embedded as the C<src> of an C<E<lt>img /E<gt> tag.
+
+
+=head2 piwik_api_url
+
+  my $src_url = $c->piwik_api_url(
+    ImageGraph.get => {
+      apiModule => 'VisitsSummary',
+      apiAction => 'get',
+      graphType => 'evolution',
+      period => 'day',
+      date => 'last30',
+      width => 500,
+      height => 250
+  });
+
+  # In template
+  <img src="<%= $src_url %>" alt="Piwik analysis" />
+
+Creates the URL of an API request and returns the L<Mojo::URL> object.
+Accepts the same parameters as the L<piwik_api|/piwik_api> helper,
+excluding the callback.
+
+B<This helper is EXPERIMENTAL and may change without warnings!>
 
 
 =head1 LIMITATIONS
