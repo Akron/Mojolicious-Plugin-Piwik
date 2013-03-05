@@ -541,7 +541,7 @@ description in the hash value of C<error>.
 If an image is expected instead of a JSON object
 (as for the Tracking or the C<ImageGraph> API), the image is base64
 encoded and mime-type prefixed in the hash value of C<image>,
-ready to be embedded as the C<src> of an C<E<lt>img /E<gt> tag.
+ready to be embedded as the C<src> of an C<E<lt>img /E<gt>> tag.
 
 
 =head2 piwik_api_url
