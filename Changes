@@ -2,6 +2,7 @@
         - Delete mentioning api_test in documentation.
 	- Declare 'opt-out' and 'opt-out-url' as EXPERIMENTAL.
 	- Introduce piwik_api_url helper as EXPERIMENTAL.
+        - Improve documentation.
 
 0.09 2013-03-01
 	- Update year.

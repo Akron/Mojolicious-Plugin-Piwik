@@ -432,12 +432,13 @@ instance. Defaults to the site id and the url given when the plugin
 was registered.
 
 This tag should be included at the bottom
-of the body tag of your website.
+of the body tag of each website you want to analyse.
 
   %= piwik_tag 'opt-out', width => 400
 
-The special C<opt-out> tag renders an iframe helping
-your visitors to disallow tracking via javascript.
+The special C<opt-out> tag renders an
+L<iframe|http://piwik.org/privacy/#toc-step-3-include-a-web-analytics-opt-out-feature-on-your-site-using-an-iframe>
+helping your visitors to disallow tracking via javascript.
 See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
 for explanation of usage.
 
@@ -501,9 +502,10 @@ The ip address is not forwarded.
     });
 
 As the C<url> parameter is used to define the Piwik instance,
-the url of the requested resource to be named C<action_url>.
+the url of the requested resource has to be named C<action_url>.
 
-Please remember that cookie-based opt-out can't be supported.
+Please remember that cookie-based opt-out can't be supported
+for the non-javascript Tracking API.
 
 In addition to the parameters of the API references, the following
 parameters are allowed:
@@ -536,10 +538,11 @@ for example C<idSite> (for analysis), C<date> (for ranges) and C<res> (for track
     });
 
 In case of an error, C<piwik_api> tries to response with a meaningsful
-descriptin in the hash value of C<error>.
+description in the hash value of C<error>.
 If an image is expected instead of a JSON object
 (as for the Tracking or the C<ImageGraph> API), the image is base64
-encoded and mime-type prefixed in the hash value of image.
+encoded and mime-type prefixed in the hash value of C<image>,
+ready to be embedded as the C<src> of an C<E<lt>img /E<gt> tag.
 
 
 =head2 piwik_api_url
@@ -567,7 +570,7 @@ B<This helper is EXPERIMENTAL and may change without warnings!>
 
 =head1 LIMITATIONS
 
-The plugin lacks support for eCommerce tracking.
+The plugin currently lacks support for eCommerce tracking.
 
 
 =head1 TESTING
@@ -584,7 +587,7 @@ and run C<make test>, for example:
     action_name => 'Märchen/Test'
   };
 
-The user agent to be ignored is called C<Mojo-Test>.
+The user agent to be ignored in your Piwik instance is called C<Mojo-Test>.
 
 
 =head1 DEPENDENCIES
@@ -607,6 +610,7 @@ and/or modify it under the same terms as Perl.
 Please make sure you are using Piwik in compliance to the law.
 For german users,
 L<this information|https://www.datenschutzzentrum.de/tracking/piwik/>
+[last accessed on 2013-03-03]
 may help you to design your service correctly.
 
 This plugin was developed for
