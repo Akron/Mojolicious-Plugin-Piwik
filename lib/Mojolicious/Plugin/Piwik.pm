@@ -548,13 +548,13 @@ ready to be embedded as the C<src> of an C<E<lt>img /E<gt> tag.
 =head2 piwik_api_url
 
   my $src_url = $c->piwik_api_url(
-    ImageGraph.get => {
+    'ImageGraph.get' => {
       apiModule => 'VisitsSummary',
       apiAction => 'get',
       graphType => 'evolution',
       period => 'day',
-      date => 'last30',
-      width => 500,
+      date   => 'last30',
+      width  => 500,
       height => 250
   });
 
