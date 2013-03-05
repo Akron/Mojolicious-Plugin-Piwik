@@ -3,7 +3,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 # Todo:
 # - Better test tracking API support
@@ -13,6 +13,7 @@ our $VERSION = '0.09';
 # - Add eCommerce support
 #   http://piwik.org/docs/ecommerce-analytics/
 # - Improve error handling.
+# - Introduce piwik_widget helper
 
 
 # Register plugin
@@ -236,7 +237,7 @@ SCRIPTTAG
       $url->query($param);
 
       # Return string for api testing
-      return $url->to_string if $api_test;
+      return $url if $api_test;
 
       # Create Mojo::UserAgent
       my $ua = Mojo::UserAgent->new(max_redirects => 2);
@@ -247,7 +248,8 @@ SCRIPTTAG
       unless ($cb) {
 	my $tx = $ua->get($url);
 
-	return _treat_response($tx->res) if $tx->success;
+	# Return prepared response
+	return _prepare_response($tx->res) if $tx->success;
 
 	return;
       }
@@ -259,32 +261,40 @@ SCRIPTTAG
 	    my ($ua, $tx) = @_;
 
 	    my $json = {};
-	    $json = _treat_response($tx->res) if $tx->success;
 
+	    # Return prepared response
+	    $json = _prepare_response($tx->res) if $tx->success;
+
+	    # Release callback
 	    $cb->($json);
 	  });
 	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
       };
     });
 
-
+  # Establish 'piwik_api_url' helper
   $mojo->helper(
-    piwik_widget => sub {
-      my $c = shift;
-      # http://piwik.org/docs/embed-piwik-report/
-      # <div id="widgetIframe"><iframe width="100%" height="350" src="http://grimms-abenteuer.de/piwik/index.php?module=Widgetize&action=iframe&columns[]=nb_visits&widget=1&moduleToWidgetize=VisitsSummary&actionToWidgetize=getEvolutionGraph&idSite=3&period=range&date=last30&disableLink=1&widget=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>
+    piwik_api_url => sub {
+      my ($c, $method, $param) = @_;
+
+      # Set api_test to true
+      $param->{api_test} = 1;
+      return $c->piwik_api($method => $param);
     }
   );
 };
 
-sub _treat_response {
+# Treat response different
+sub _prepare_response {
   my $res = shift;
   my $ct = $res->headers->content_type;
 
+  # Return json response
   if (index($ct, 'json') >= 0) {
     return $res->json;
   }
 
+  # Prepare erroneous html response
   elsif (index($ct, 'html') >= 0) {
 
     # Find error message in html
@@ -297,13 +307,18 @@ sub _treat_response {
     return { error => $found->all_text };
   }
 
+  # Prepare image responses
   elsif ($ct =~ m{^image/(gif|jpe?g)}) {
     return {
       image => 'data:image/' . $1 . ';base64,' . b($res->body)->b64_encode
     };
   };
 
-  return { error => 'Unknown response type' };
+  # Return unknown response type
+  return {
+    error => 'Unknown response type',
+    body  => $res->body
+  };
 };
 
 
@@ -435,6 +450,9 @@ not allow third party cookies.
 See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
 for explanation of usage.
 
+B<The 'opt-out' and 'opt-out-url' options are
+EXPERIMENTAL and may change in further releases!>
+
 
 =head2 piwik_api
 
@@ -502,11 +520,6 @@ Defaults to the url given when the plugin was registered.
 C<secure> - Boolean value that indicates a request using the https scheme.
 Defaults to false.
 
-=item
-
-C<api_test> - Boolean value that indicates a test request, that returns the
-created request url instead of the JSON response. Defaults to false.
-
 =back
 
 C<idSite> is an alias of C<site_id> and C<idsite> and defaults to the id
@@ -527,6 +540,29 @@ descriptin in the hash value of C<error>.
 If an image is expected instead of a JSON object
 (as for the Tracking or the C<ImageGraph> API), the image is base64
 encoded and mime-type prefixed in the hash value of image.
+
+
+=head2 piwik_api_url
+
+  my $src_url = $c->piwik_api_url(
+    ImageGraph.get => {
+      apiModule => 'VisitsSummary',
+      apiAction => 'get',
+      graphType => 'evolution',
+      period => 'day',
+      date => 'last30',
+      width => 500,
+      height => 250
+  });
+
+  # In template
+  <img src="<%= $src_url %>" alt="Piwik analysis" />
+
+Creates the URL of an API request and returns the L<Mojo::URL> object.
+Accepts the same parameters as the L<piwik_api|/piwik_api> helper,
+excluding the callback.
+
+B<This helper is EXPERIMENTAL and may change without warnings!>
 
 
 =head1 LIMITATIONS
