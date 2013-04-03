@@ -2,6 +2,7 @@ package Mojolicious::Plugin::Piwik;
 use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
+use Mojo::IOLoop;
 
 our $VERSION = '0.11';
 
@@ -256,19 +257,28 @@ SCRIPTTAG
 
       # Non-Blocking
       else {
-	$ua->get(
-	  $url => sub {
-	    my ($ua, $tx) = @_;
+
+	# Create delay object
+	my $delay = Mojo::IOLoop->delay(
+	  sub {
+	    my $delay = shift;
+	    my $tx = shift;
 
 	    my $json = {};
 
 	    # Return prepared response
-	    $json = _prepare_response($tx->res) if $tx->success;
+	    my $res = $tx->success;
+	    $json = _prepare_response($res) if $res;
 
 	    # Release callback
 	    $cb->($json);
-	  });
-	Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
+	  }
+	);
+
+	$ua->get($url => $delay->begin);
+
+	# Start IOLoop if not started already
+	$delay->wait unless Mojo::IOLoop->is_running;
       };
     });
 
