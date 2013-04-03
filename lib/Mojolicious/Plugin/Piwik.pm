@@ -261,8 +261,7 @@ SCRIPTTAG
 	# Create delay object
 	my $delay = Mojo::IOLoop->delay(
 	  sub {
-	    my $delay = shift;
-	    my $tx = shift;
+	    my $tx = pop;
 
 	    my $json = {};
 
