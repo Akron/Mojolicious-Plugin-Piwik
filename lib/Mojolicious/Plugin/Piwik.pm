@@ -3,7 +3,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 # Todo:
 # - Better test tracking API support
