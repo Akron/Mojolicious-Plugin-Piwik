@@ -261,19 +261,15 @@ SCRIPTTAG
 	# Create delay object
 	my $delay = Mojo::IOLoop->delay(
 	  sub {
-	    my $tx = pop;
-
-	    my $json = {};
-
 	    # Return prepared response
-	    my $res = $tx->success;
-	    $json = _prepare_response($res) if $res;
+	    my $res = pop->success;
 
-	    # Release callback
-	    $cb->($json);
+	    # Release callback with json object
+	    $cb->( $res ? _prepare_response($res) : {} );
 	  }
 	);
 
+	# Get resource non-blocking
 	$ua->get($url => $delay->begin);
 
 	# Start IOLoop if not started already
