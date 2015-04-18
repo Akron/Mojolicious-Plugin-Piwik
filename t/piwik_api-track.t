@@ -19,11 +19,9 @@ $app->plugin(Piwik => {
   url => 'sojolicio.us/piwik'
 });
 
-my $c = Mojolicious::Controller->new;
+my $c = $app->build_controller;
 
-$c->app($app);
-
-$c->req->url(Mojo::URL->new('http:/khm.li/Rapunzel'));
+$c->req->url(Mojo::URL->new('http://khm.li/Rapunzel'));
 
 $c->app($app);
 for ($c->req->headers) {

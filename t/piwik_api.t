@@ -63,7 +63,9 @@ unless ($param{url}) {
   exit;
 };
 
-like($app->piwik_api(
+my $c = $app->build_controller;
+
+like($c->piwik_api(
   'ExampleAPI.getPiwikVersion' => {
     %param
   }
@@ -102,7 +104,7 @@ my $array = $app->piwik_api(
 );
 
 is($array->[0], 'piwik', 'API.getDescriptionArray 1');
-is($array->[1], 'open source', 'API.getDescriptionArray 2');
+like($array->[1], qr/open|free|libre/, 'API.getDescriptionArray 2');
 is($array->[2], 'web analytics', 'API.getDescriptionArray 3');
 is($array->[3], 'free', 'API.getDescriptionArray 4');
 is($array->[4], 'Strong message: Свободный Тибет',

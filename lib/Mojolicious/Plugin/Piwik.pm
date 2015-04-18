@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 use Mojo::IOLoop;
 
-our $VERSION = '0.13';
+our $VERSION = '0.16';
 
 # Todo:
 # - Better test tracking API support
@@ -25,7 +25,7 @@ sub register {
 
   # Load parameter from Config file
   if (my $config_param = $mojo->config('Piwik')) {
-    $plugin_param = { %$config_param, %$plugin_param };
+    $plugin_param = { %$plugin_param, %$config_param };
   };
 
   # Embed tag
@@ -121,9 +121,10 @@ SCRIPTTAG
       my $api_test = delete $param->{api_test};
 
       # Get piwik url
-      my $url = delete $param->{url} || $plugin_param->{url};
+      my $url = delete($param->{url}) || $plugin_param->{url};
 
-      $url =~ s{^https?://}{}i;
+
+      $url =~ s{^(?:https?:)?//}{}i;
       $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
 
       # Create request URL
@@ -156,7 +157,7 @@ SCRIPTTAG
 	# Set default values
 	for ($param)  {
 	  $_->{ua}     //= $header->user_agent if $header->user_agent;
-	  $_->{urlref} //= $header->referrer if $header->referrer;
+	  $_->{urlref} //= $header->referrer   if $header->referrer;
 	  $_->{rand}     = int(rand(10_000));
 	  $_->{rec}      = 1;
 	  $_->{apiv}     = 1;
@@ -418,8 +419,9 @@ C<token_auth> - Token for authentication. Used only for the Piwik API.
 
 =back
 
-All parameters can be set either on registration or
-as part of the configuration file with the key C<Piwik>.
+All parameters can be set either as part of the configuration
+file with the key C<Piwik> or on registration
+(that can be overwritten by configuration).
 
 
 =head1 HELPERS
@@ -606,7 +608,7 @@ L<Mojolicious>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012-2014, L<Nils Diewald|http://nils-diewald.de/>.
+Copyright (C) 2012-2015, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.

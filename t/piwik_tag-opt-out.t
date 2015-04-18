@@ -57,9 +57,7 @@ like($oo, qr{>No iframes supported<}, 'Opt-Out');
 like($oo, qr{&amp;}, 'Opt-Out');
 
 
-my $c = Mojolicious::Controller->new;
-
-$c->app($app);
+my $c = $app->build_controller;
 
 $c->req->url(Mojo::URL->new('http:/khm.li/Rapunzel'));
 
@@ -86,7 +84,7 @@ like($oo, qr{href="https://sojolicio\.us/piwik/index\.php\?module=CoreAdminHome&
 like($oo, qr{>MyOptOut<}, 'opt-out-link');
 like($oo, qr{rel="nofollow"}, 'opt-out-link');
 
-$oo = $c->render(inline => "<%= piwik_tag 'opt-out-link', begin %>Opt Out!<% end %>", partial => 1);
+$oo = $c->include(inline => "<%= piwik_tag 'opt-out-link', begin %>Opt Out!<% end %>");
 
 like($oo, qr{<a href=".+" rel="nofollow">Opt Out!</a>}, 'opt-out-link');
 
