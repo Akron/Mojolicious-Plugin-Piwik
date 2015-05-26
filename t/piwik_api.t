@@ -35,12 +35,12 @@ like($url, qr{module=API}, 'Piwik API 2');
 like($url, qr{method=API\.get}, 'Piwik API 3');
 like($url, qr{format=JSON}, 'Piwik API 4');
 like($url, qr{period=range}, 'Piwik API 5');
-like($url, qr{date=2012-11-01,2012-12-01}, 'Piwik API 6');
+like($url, qr{date=2012-11-01.+?2012-12-01}, 'Piwik API 6');
 like($url, qr{secure=1}, 'Piwik API 7');
 like($url, qr{token_auth=anonymous}, 'Piwik API 8');
-like($url, qr{urls%5B0%5D=http:\/\/grimms-abenteuer\.de/}, 'Piwik API 9');
-like($url, qr{urls%5B1%5D=http:\/\/khm\.li/}, 'Piwik API 10');
-like($url, qr{idSite=4,5}, 'Piwik API 11');
+like($url, qr{urls%5B0%5D=http.+?grimms-abenteuer\.de}, 'Piwik API 9');
+like($url, qr{urls%5B1%5D=http.+?khm\.li}, 'Piwik API 10');
+like($url, qr{idSite=4.+?5}, 'Piwik API 11');
 
 # Life tests:
 # Testing the piwik api is hard to do ...
