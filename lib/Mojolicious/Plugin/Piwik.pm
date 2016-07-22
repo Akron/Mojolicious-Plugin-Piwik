@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 use Mojo::IOLoop;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 # Todo:
 # - Better test tracking API support
@@ -97,7 +97,7 @@ sub register {
       };
 
       # Create piwik tag
-      b(<<"SCRIPTTAG")->squish;
+      b(<<"SCRIPTTAG");
 <script type="text/javascript">var _paq=_paq||[];(function(){var
 u='http'+((document.location.protocol=='https:')?'s':'')+'://$url';
 with(_paq){push(['setSiteId',$site_id]);push(['setTrackerUrl',u+'piwik.php']);
@@ -608,7 +608,7 @@ L<Mojolicious>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012-2015, L<Nils Diewald|http://nils-diewald.de/>.
+Copyright (C) 2012-2016, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.

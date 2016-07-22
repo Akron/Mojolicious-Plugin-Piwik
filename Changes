@@ -1,3 +1,6 @@
+0.19 2016-07-21
+        - Fixed support for Mojolicious 7.
+
 0.18 2015-05-26
         - Updated to support new URL escaping in Mojolicious.
 
