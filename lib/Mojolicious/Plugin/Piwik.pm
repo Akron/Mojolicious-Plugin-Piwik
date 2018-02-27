@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 use Mojo::IOLoop;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 # Todo:
 # - Better test tracking API support
@@ -45,18 +45,18 @@ sub register {
       # Use opt-out tag
       my %opt;
       if ($_[0] && index(lc $_[0], 'opt-out') == 0) {
-	my $opt_out = shift;
+        my $opt_out = shift;
 
-	# Get iframe content
-	my $cb = ref $_[-1] eq 'CODE' ? pop : 0;
+        # Get iframe content
+        my $cb = ref $_[-1] eq 'CODE' ? pop : 0;
 
-	# Accept parameters
-	%opt = @_;
-	$opt{out} = $opt_out;
-	$opt{cb}  = $cb;
+        # Accept parameters
+        %opt = @_;
+        $opt{out} = $opt_out;
+        $opt{cb}  = $cb;
 
-	# Empty arguments
-	@_ = ();
+        # Empty arguments
+        @_ = ();
       };
 
       my $site_id = shift || $plugin_param->{site_id} || 1;
@@ -67,33 +67,33 @@ sub register {
 
       # Clear url
       for ($url) {
-	s{^https?:/*}{}i;
-	s{piwik\.(?:php|js)$}{}i;
-	s{(?<!/)$}{/};
+        s{^https?:/*}{}i;
+        s{piwik\.(?:php|js)$}{}i;
+        s{(?<!/)$}{/};
       };
 
       # Render opt-out tag
       if (my $opt_out = delete $opt{out}) {
 
-	# Get protocol
-	my $req_url = $c->req->url;
-	my $prot = $req_url->scheme ? lc $req_url->scheme : 'http';
+        # Get protocol
+        my $req_url = $c->req->url;
+        my $prot = $req_url->scheme ? lc $req_url->scheme : 'http';
 
-	my $cb = delete $opt{cb};
-	my $oo_url = "${prot}://${url}index.php?module=CoreAdminHome&action=optOut";
+        my $cb = delete $opt{cb};
+        my $oo_url = "${prot}://${url}index.php?module=CoreAdminHome&action=optOut";
 
-	if ($opt_out eq 'opt-out-link') {
-	  $opt{href} = $oo_url;
-	  $opt{rel} //= 'nofollow';
-	  return $c->tag('a', %opt, ($cb || sub { 'Piwik Opt-Out' }));
-	};
+        if ($opt_out eq 'opt-out-link') {
+          $opt{href} = $oo_url;
+          $opt{rel} //= 'nofollow';
+          return $c->tag('a', %opt, ($cb || sub { 'Piwik Opt-Out' }));
+        };
 
-	$opt{src} = $oo_url;
-	$opt{width}  ||= '600px';
-	$opt{height} ||= '200px';
-	$opt{frameborder} ||= 'no';
+        $opt{src} = $oo_url;
+        $opt{width}  ||= '600px';
+        $opt{height} ||= '200px';
+        $opt{frameborder} ||= 'no';
 
-	return $c->tag('iframe', %opt, ($cb || sub { '' }));
+        return $c->tag('iframe', %opt, ($cb || sub { '' }));
       };
 
       # Create piwik tag
@@ -123,8 +123,9 @@ SCRIPTTAG
       # Get piwik url
       my $url = delete($param->{url}) || $plugin_param->{url};
 
-
-      $url =~ s{^(?:https?:)?//}{}i;
+      if ($url =~ s{^(?:http(s)?:)?//}{}i && $1) {
+        $param->{secure} = 1;
+      };
       $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
 
       # Create request URL
@@ -132,105 +133,105 @@ SCRIPTTAG
 
       # Site id
       my $site_id = $param->{site_id} ||
-	            $param->{idSite}  ||
-	            $param->{idsite}  ||
-                    $plugin_param->{site_id} || 1;
+        $param->{idSite}  ||
+        $param->{idsite}  ||
+        $plugin_param->{site_id} || 1;
 
       # delete unused parameters
       delete @{$param}{qw/site_id idSite idsite format module method/};
 
       # Token Auth
       my $token_auth = delete $param->{token_auth} ||
-	               $plugin_param->{token_auth} || 'anonymous';
+        $plugin_param->{token_auth} || 'anonymous';
 
       # Tracking API
       if (lc $method eq 'track') {
 
-	$url->path('piwik.php');
+        $url->path('piwik.php');
 
-	# Request Headers
-	my $header = $c->req->headers;
+        # Request Headers
+        my $header = $c->req->headers;
 
-	# Respect do not track
-	return if $header->dnt;
+        # Respect do not track
+        return if $header->dnt;
 
-	# Set default values
-	for ($param)  {
-	  $_->{ua}     //= $header->user_agent if $header->user_agent;
-	  $_->{urlref} //= $header->referrer   if $header->referrer;
-	  $_->{rand}     = int(rand(10_000));
-	  $_->{rec}      = 1;
-	  $_->{apiv}     = 1;
-	  $_->{url}      = delete $_->{action_url} || $c->url_for->to_abs;
+        # Set default values
+        for ($param)  {
+          $_->{ua}     //= $header->user_agent if $header->user_agent;
+          $_->{urlref} //= $header->referrer   if $header->referrer;
+          $_->{rand}     = int(rand(10_000));
+          $_->{rec}      = 1;
+          $_->{apiv}     = 1;
+          $_->{url}      = delete $_->{action_url} || $c->url_for->to_abs;
 
-	  # Todo: maybe make optional with parameter
-	  # $_->{_id} = rand ...
-	};
+          # Todo: maybe make optional with parameter
+          # $_->{_id} = rand ...
+        };
 
-	# Resolution
-	if ($param->{res} && ref $param->{res}) {
-	  $param->{res} = join 'x', @{$param->{res}}[0, 1];
-	};
+        # Resolution
+        if ($param->{res} && ref $param->{res}) {
+          $param->{res} = join 'x', @{$param->{res}}[0, 1];
+        };
 
-	$url->query(
-	  idsite => ref $site_id ? $site_id->[0] : $site_id,
-	  format => 'JSON'
-	);
+        $url->query(
+          idsite => ref $site_id ? $site_id->[0] : $site_id,
+          format => 'JSON'
+        );
 
-	$url->query({token_auth => $token_auth}) if $token_auth;
+        $url->query({token_auth => $token_auth}) if $token_auth;
       }
 
       # Analysis API
       else {
 
-	# Create request method
-	$url->query(
-	  module => 'API',
-	  method => $method,
-	  format => 'JSON',
-	  idSite => ref $site_id ? join(',', @$site_id) : $site_id,
-	  token_auth => $token_auth
-	);
+        # Create request method
+        $url->query(
+          module => 'API',
+          method => $method,
+          format => 'JSON',
+          idSite => ref $site_id ? join(',', @$site_id) : $site_id,
+          token_auth => $token_auth
+        );
 
-	# Urls
-	if ($param->{urls}) {
+        # Urls
+        if ($param->{urls}) {
 
-	  # Urls is arrayref
-	  if (ref $param->{urls}) {
-	    my $i = 0;
-	    foreach (@{$param->{urls}}) {
-	      $url->query({ 'urls[' . $i++ . ']' => $_ });
-	    };
-	  }
+          # Urls is arrayref
+          if (ref $param->{urls}) {
+            my $i = 0;
+            foreach (@{$param->{urls}}) {
+              $url->query({ 'urls[' . $i++ . ']' => $_ });
+            };
+          }
 
-	  # Urls as string
-	  else {
-	    $url->query({urls => $param->{urls}});
-	  };
-	  delete $param->{urls};
-	};
+          # Urls as string
+          else {
+            $url->query({urls => $param->{urls}});
+          };
+          delete $param->{urls};
+        };
 
-	# Range with periods
-	if ($param->{period}) {
+        # Range with periods
+        if ($param->{period}) {
 
-	  # Delete period
-	  my $period = lc delete $param->{period};
+          # Delete period
+          my $period = lc delete $param->{period};
 
-	  # Delete date
-	  my $date = delete $param->{date};
+          # Delete date
+          my $date = delete $param->{date};
 
-	  # Get range
-	  if ($period eq 'range') {
-	    $date = ref $date ? join(',', @$date) : $date;
-	  };
+          # Get range
+          if ($period eq 'range') {
+            $date = ref $date ? join(',', @$date) : $date;
+          };
 
-	  if ($period =~ m/^(?:day|week|month|year|range)$/) {
-	    $url->query({
-	      period => $period,
-	      date   => $date
-	    });
-	  };
-	};
+          if ($period =~ m/^(?:day|week|month|year|range)$/) {
+            $url->query({
+              period => $period,
+              date   => $date
+            });
+          };
+        };
       };
 
       # Todo: Handle Filter
@@ -248,33 +249,33 @@ SCRIPTTAG
 
       # Blocking
       unless ($cb) {
-	my $tx = $ua->get($url);
+        my $tx = $ua->get($url);
 
-	# Return prepared response
-	return _prepare_response($tx->res) if $tx->success;
+        # Return prepared response
+        return _prepare_response($tx->res) if $tx->success;
 
-	return;
+        return;
       }
 
       # Non-Blocking
       else {
 
-	# Create delay object
-	my $delay = Mojo::IOLoop->delay(
-	  sub {
-	    # Return prepared response
-	    my $res = pop->success;
+        # Create delay object
+        my $delay = Mojo::IOLoop->delay(
+          sub {
+            # Return prepared response
+            my $res = pop->success;
 
-	    # Release callback with json object
-	    $cb->( $res ? _prepare_response($res) : {} );
-	  }
-	);
+            # Release callback with json object
+            $cb->( $res ? _prepare_response($res) : {} );
+          }
+        );
 
-	# Get resource non-blocking
-	$ua->get($url => $delay->begin);
+        # Get resource non-blocking
+        $ua->get($url => $delay->begin);
 
-	# Start IOLoop if not started already
-	$delay->wait unless Mojo::IOLoop->is_running;
+        # Start IOLoop if not started already
+        $delay->wait unless Mojo::IOLoop->is_running;
       };
     });
 
@@ -289,6 +290,7 @@ SCRIPTTAG
     }
   );
 };
+
 
 # Treat response different
 sub _prepare_response {
@@ -526,7 +528,8 @@ Defaults to the url given when the plugin was registered.
 =item
 
 C<secure> - Boolean value that indicates a request using the https scheme.
-Defaults to false.
+Defaults to false, in case the C<url> is given without or
+with a C<http> scheme.
 
 =back
 
@@ -608,7 +611,7 @@ L<Mojolicious>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012-2016, L<Nils Diewald|http://nils-diewald.de/>.
+Copyright (C) 2012-2018, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
