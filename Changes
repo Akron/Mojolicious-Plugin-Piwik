@@ -1,6 +1,7 @@
 0.20 2018-02-27
         - Fix secure flag to accept https scheme when
           provided by URL.
+        - Update link to ULD information.
 
 0.19 2016-07-21
         - Fixed support for Mojolicious 7.

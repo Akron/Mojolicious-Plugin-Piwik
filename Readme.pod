@@ -191,7 +191,8 @@ Defaults to the url given when the plugin was registered.
 =item
 
 C<secure> - Boolean value that indicates a request using the https scheme.
-Defaults to false.
+Defaults to false, in case the C<url> is given without or
+with a C<http> scheme.
 
 =back
 
@@ -273,18 +274,18 @@ L<Mojolicious>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012-2016, L<Nils Diewald|http://nils-diewald.de/>.
+Copyright (C) 2012-2018, L<Nils Diewald|http://nils-diewald.de/>.
 
 This program is free software, you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
 
 Please make sure you are using Piwik in compliance to the law.
 For german users,
-L<this information|https://www.datenschutzzentrum.de/tracking/piwik/>
-(last accessed on 2013-03-03)
+L<this information|https://www.datenschutzzentrum.de/uploads/projekte/verbraucherdatenschutz/20110315-webanalyse-piwik.pdf>
+(last accessed on 2018-02-27)
 may help you to design your service correctly.
 
 This plugin was developed for
-L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.
+L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|https://khm.li/>.
 
 =cut

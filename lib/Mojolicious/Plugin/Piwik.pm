@@ -618,11 +618,11 @@ modify it under the terms of the Artistic License version 2.0.
 
 Please make sure you are using Piwik in compliance to the law.
 For german users,
-L<this information|https://www.datenschutzzentrum.de/tracking/piwik/>
-(last accessed on 2013-03-03)
+L<this information|https://www.datenschutzzentrum.de/uploads/projekte/verbraucherdatenschutz/20110315-webanalyse-piwik.pdf>
+(last accessed on 2018-02-27)
 may help you to design your service correctly.
 
 This plugin was developed for
-L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|http://khm.li/>.
+L<khm.li - Kinder- und Hausmärchen der Brüder Grimm|https://khm.li/>.
 
 =cut
