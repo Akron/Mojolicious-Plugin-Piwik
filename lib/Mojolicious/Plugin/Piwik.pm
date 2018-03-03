@@ -65,9 +65,13 @@ sub register {
       # No piwik url
       return b('<!-- No Piwik-URL given -->') unless $url;
 
+      my $prot = 'http';
+
       # Clear url
       for ($url) {
-        s{^https?:/*}{}i;
+        if (s{^http(s?):/*}{}i) {
+          $prot = 'https' if $1;
+        };
         s{piwik\.(?:php|js)$}{}i;
         s{(?<!/)$}{/};
       };
@@ -75,9 +79,11 @@ sub register {
       # Render opt-out tag
       if (my $opt_out = delete $opt{out}) {
 
-        # Get protocol
-        my $req_url = $c->req->url;
-        my $prot = $req_url->scheme ? lc $req_url->scheme : 'http';
+        # Upgrade protocol if embedded in https page
+        if ($prot ne 'https') {
+          my $req_url = $c->req->url;
+          $prot = $req_url->scheme ? lc $req_url->scheme : 'http';
+        };
 
         my $cb = delete $opt{cb};
         my $oo_url = "${prot}://${url}index.php?module=CoreAdminHome&action=optOut";
@@ -106,7 +112,7 @@ d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];
 if(!s){s=d.getElementsByTagName('head')[0].firstChild};
 with(g){type='text/javascript';defer=async=true;
 src=u+'piwik.js';s.parentNode.insertBefore(g,s)}})();</script>
-<noscript><img src="http://${url}piwik.php?idSite=${site_id}&amp;rec=1" alt=""
+<noscript><img src="${prot}://${url}piwik.php?idSite=${site_id}&amp;rec=1" alt=""
 style="border:0" /></noscript>
 SCRIPTTAG
     });
