@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Mojolicious::Plugin::Piwik - Use Piwik in Mojolicious
+Mojolicious::Plugin::Piwik - Use Matomo (Piwik) in Mojolicious
 
 
 =head1 SYNOPSIS
@@ -25,7 +25,7 @@ Mojolicious::Plugin::Piwik - Use Piwik in Mojolicious
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::Piwik> is a simple plugin for embedding
-L<Piwik|http://piwik.org/> Analysis in your Mojolicious app.
+L<Matomo (Piwik)|https://matomo.org/> Analysis in your Mojolicious app.
 Please respect the privacy of your visitors and do not track
 more information than necessary!
 
@@ -66,7 +66,7 @@ Accepts the following parameters:
 
 =item
 
-C<url> - URL of your Piwik instance.
+C<url> - URL of your Matomo (Piwik) instance.
 
 =item
 
@@ -80,7 +80,8 @@ defaults to C<false> otherwise.
 
 =item
 
-C<token_auth> - Token for authentication. Used only for the Piwik API.
+C<token_auth> - Token for authentication.
+Used only for the Piwik API.
 
 =back
 
@@ -96,6 +97,7 @@ file with the key C<Piwik> or on registration
   %= piwik_tag
   %= piwik_tag 1
   %= piwik_tag 1, 'piwik.khm.li'
+  %= piwik_tag 1, 'https://piwik.khm.li'
 
 Renders a script tag that asynchronously loads the Piwik
 javascript file from your Piwik instance.
@@ -106,24 +108,24 @@ was registered.
 This tag should be included at the bottom
 of the body tag of each website you want to analyse.
 
+The special C<opt-out> tag renders an
+L<iframe|https://matomo.org/faq/general/faq_20000/>
+helping your visitors to disallow tracking via javascript.
+
   %= piwik_tag 'opt-out', width => 400
 
-The special C<opt-out> tag renders an
-L<iframe|http://piwik.org/privacy/#toc-step-3-include-a-web-analytics-opt-out-feature-on-your-site-using-an-iframe>
-helping your visitors to disallow tracking via javascript.
 See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
 for explanation of usage.
-
-  <%= piwik_tag 'opt-out-link', begin %>Opt Out<% end %>
-  # <a href="..." rel="nofollow">Opt Out</a>
 
 The special C<opt-out-link> renders an anchor link
 to the opt-out page to be used if the visitor does
 not allow third party cookies.
+
+  <%= piwik_tag 'opt-out-link', begin %>Opt Out<% end %>
+  # <a href="..." rel="nofollow">Opt Out</a>
+
 See the L<default tag helper|Mojolicious::Plugin::TagHelpers/tag>
 for explanation of usage.
-
-B<The 'opt-out' and 'opt-out-link' options are EXPERIMENTAL and may change in further releases!>
 
 
 =head2 piwik_api
@@ -155,13 +157,15 @@ Sends an API request and returns the response as a hash
 or array reference (the decoded JSON response).
 Accepts the API method, a hash reference
 with request parameters as described in the
-L<Piwik API|http://piwik.org/docs/analytics-api/>, and
+L<Piwik API|https://matomo.org/docs/analytics-api/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
-The L<Tracking API|http://piwik.org/docs/tracking-api/reference/>
+The L<Tracking API|https://matomo.org/docs/tracking-api/reference/>
 uses the method name C<Track> and will forward user agent and
 referrer information based on the controller request as well as the
-url of the requested resource, unless Do-Not-Track is activated.
+url of the requested resource, unless
+L<Do-Not-Track|https://www.eff.org/issues/do-not-track>
+is activated.
 The ip address is not forwarded.
 
   $c->piwik_api(
@@ -190,7 +194,7 @@ Defaults to the url given when the plugin was registered.
 
 =item
 
-C<secure> - Boolean value that indicates a request using the https scheme.
+C<secure> - Boolean value that indicates a request using the C<https> scheme.
 Defaults to false, in case the C<url> is given without or
 with a C<http> scheme.
 
@@ -253,7 +257,7 @@ and run C<make test>, for example:
 
   {
     token_auth => '123456abcdefghijklmnopqrstuvwxyz',
-    url => 'http://piwik.khm.li/',
+    url => 'https://piwik.khm.li/',
     site_id => 1,
     action_url => 'http://khm.li/Test',
     action_name => 'Märchen/Test'
@@ -279,7 +283,7 @@ Copyright (C) 2012-2018, L<Nils Diewald|http://nils-diewald.de/>.
 This program is free software, you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
 
-Please make sure you are using Piwik in compliance to the law.
+Please make sure you are using Matomo (Piwik) in compliance to the law.
 For german users,
 L<this information|https://www.datenschutzzentrum.de/uploads/projekte/verbraucherdatenschutz/20110315-webanalyse-piwik.pdf>
 (last accessed on 2018-02-27)
