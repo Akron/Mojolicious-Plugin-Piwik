@@ -4,7 +4,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 use Mojo::IOLoop;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 # Todo:
 # - Better test tracking API support
