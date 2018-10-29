@@ -5,7 +5,7 @@ use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
 use Mojo::IOLoop;
 
-our $VERSION = '0.22';
+our $VERSION = '0.21';
 
 # Todo:
 # - Better test tracking API support
@@ -259,7 +259,7 @@ SCRIPTTAG
         my $tx = $ua->get($url);
 
         # Return prepared response
-        return _prepare_response($tx->res) if $tx->success;
+        return _prepare_response($tx->res) unless $tx->error;
 
         return;
       }
