@@ -17,6 +17,7 @@ WriteMakefile(
   },
   LICENSE      => 'artistic_2',
   (eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (META_MERGE => {
+    'meta-spec' => { version => 2 },
     requires  => {perl => '5.010001'},
     resources => {
       license     => 'https://opensource.org/licenses/artistic-license-2.0',
