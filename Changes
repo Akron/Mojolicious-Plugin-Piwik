@@ -1,3 +1,6 @@
+0.22 2018-10-29
+        - Fix permissions of text files.
+
 0.21 2018-05-21
         - Fix description of 'embed' flag
         - Deprecate piwik_api and piwik_api_url in favor of
