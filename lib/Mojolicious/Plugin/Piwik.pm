@@ -665,7 +665,7 @@ with request parameters as described in the
 L<Piwik API|https://matomo.org/docs/analytics-api/>, and
 optionally a callback, if the request is meant to be non-blocking.
 
-The L<Tracking API|https://matomo.org/docs/tracking-api/reference/>
+The L<Tracking API|https://developer.matomo.org/api-reference/tracking-api>
 uses the method name C<Track> and will forward user agent and
 referrer information based on the controller request as well as the
 url of the requested resource, unless
@@ -718,7 +718,7 @@ for example C<idSite> (for analysis), C<date> (for ranges) and C<res> (for track
       secure  => 1
     });
 
-In case of an error, C<piwik.api> tries to response with a meaningsful
+In case of an error, C<piwik.api> tries to response with a meaningful
 description in the hash value of C<error>.
 If an image is expected instead of a JSON object
 (as for the Tracking or the C<ImageGraph> API), the image is base64
