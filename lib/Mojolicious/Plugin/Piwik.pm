@@ -20,6 +20,8 @@ our $VERSION = '0.25';
 # - Support site_id and url both in piwik('track_script')
 #   shortcut and in piwik_tag 'as_script'
 
+has 'ua';
+
 # Register plugin
 sub register {
   my ($plugin, $mojo, $plugin_param) = @_;
@@ -39,6 +41,18 @@ sub register {
 
   # No script route defined
   my $script_route = 0;
+
+
+  # Create Mojo::UserAgent
+  $plugin->ua(
+    Mojo::UserAgent->new(
+      connect_timeout => 15,
+      max_redirects => 2
+    )
+  );
+
+  # Set app to server
+  $plugin->ua->server->app($mojo);
 
   # Add 'piwik_tag' helper
   $mojo->helper(
@@ -342,14 +356,11 @@ SCRIPTTAG
 
       return $url if $api_test;
 
-      # Create Mojo::UserAgent
-      my $ua = Mojo::UserAgent->new(max_redirects => 2);
-
       # Todo: Handle json errors!
 
       # Blocking
       unless ($cb) {
-        my $tx = $ua->get($url);
+        my $tx = $plugin->ua->get($url);
 
         # Return prepared response
         return _prepare_response($tx->res) unless $tx->error;
@@ -372,7 +383,7 @@ SCRIPTTAG
         );
 
         # Get resource non-blocking
-        $ua->get($url => $delay->begin);
+        $plugin->ua->get($url => $delay->begin);
 
         # Start IOLoop if not started already
         $delay->wait unless Mojo::IOLoop->is_running;
@@ -395,13 +406,10 @@ SCRIPTTAG
       # Get URL
       my $url = $c->piwik->api_url($method, $param) or return;
 
-      return $url if $api_test;
-
-      # Create Mojo::UserAgent
-      my $ua = Mojo::UserAgent->new(max_redirects => 2);
+      return Mojo::Promise->resolve($url) if $api_test;
 
       # Create promise
-      return $ua->get_p($url)->then(
+      return $plugin->ua->get_p($url)->then(
         sub {
           my $tx = shift;
           my $res = _prepare_response($tx->res);
@@ -410,9 +418,9 @@ SCRIPTTAG
           if ($res->{error}) {
             return Mojo::Promise->reject($res->{error});
           };
-          return $res;
+          return Mojo::Promise->resolve($res);
         }
-      )
+      );
     }
   );
 
@@ -442,6 +450,11 @@ SCRIPTTAG
 sub _prepare_response {
   my $res = shift;
   my $ct = $res->headers->content_type;
+
+  # No response - fine
+  unless ($res->body) {
+    return { body => '' };
+  };
 
   # Return json response
   if (index($ct, 'json') >= 0) {
@@ -713,7 +726,7 @@ with a C<http> scheme.
 
 =item
 
-C<dnt> - Override the Do-Not-Track setting.
+C<dnt> - Override the Do-Not-Track setting, in rare cases, this is required.
 
 =back
 
@@ -756,6 +769,8 @@ ready to be embedded as the C<src> of an C<E<lt>img /E<gt>> tag.
 
 Same as L<piwik.api|/piwik.api>, but returns a L<Mojo::Promise>
 object.
+
+B<The promise variant is EXPERIMENTAL and may change without warnings!>
 
 
 =head2 piwik.api_url
