@@ -228,9 +228,6 @@ SCRIPTTAG
         # Request Headers
         my $header = $c->req->headers;
 
-        # Respect do not track
-        return if $header->dnt;
-
         # Set default values
         for ($param)  {
           $_->{ua}     //= $header->user_agent if $header->user_agent;
@@ -243,6 +240,17 @@ SCRIPTTAG
           # Todo: maybe make optional with parameter
           # $_->{_id} = rand ...
         };
+
+
+        # Respect do not track
+        if (defined $param->{dnt}) {
+          return if $param->{dnt};
+          delete $param->{dnt};
+        }
+        elsif ($header->dnt) {
+          return;
+        };
+
 
         # Resolution
         if ($param->{res} && ref $param->{res}) {
@@ -702,6 +710,10 @@ Defaults to the url given when the plugin was registered.
 C<secure> - Boolean value that indicates a request using the C<https> scheme.
 Defaults to false, in case the C<url> is given without or
 with a C<http> scheme.
+
+=item
+
+C<dnt> - Override the Do-Not-Track setting.
 
 =back
 
