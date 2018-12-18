@@ -3,9 +3,10 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::Util qw/deprecated quote/;
 use Mojo::ByteStream 'b';
 use Mojo::UserAgent;
+use Mojo::Promise;
 use Mojo::IOLoop;
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 # Todo:
 # - Better test tracking API support
@@ -189,13 +190,11 @@ SCRIPTTAG
     }
   );
 
-  # Add 'piwik->api' helper
-  $mojo->helper(
-    'piwik.api' => sub {
-      my ($c, $method, $param, $cb) = @_;
 
-      # Get api_test parameter
-      my $api_test = delete $param->{api_test};
+  # Establish 'piwik.api_url' helper
+  $mojo->helper(
+    'piwik.api_url' => sub {
+      my ($c, $method, $param) = @_;
 
       # Get piwik url
       my $url = delete($param->{url}) || $plugin_param->{url};
@@ -317,6 +316,22 @@ SCRIPTTAG
       $url->query($param);
 
       # Return string for api testing
+      return $url;
+    }
+  );
+
+
+  # Establish 'piwik.api' helper
+  $mojo->helper(
+    'piwik.api' => sub {
+      my ($c, $method, $param, $cb) = @_;
+
+      # Get api_test parameter
+      my $api_test = delete $param->{api_test};
+
+      # Get URL
+      my $url = $c->piwik->api_url($method, $param) or return;
+
       return $url if $api_test;
 
       # Create Mojo::UserAgent
@@ -354,18 +369,45 @@ SCRIPTTAG
         # Start IOLoop if not started already
         $delay->wait unless Mojo::IOLoop->is_running;
       };
-    });
-
-  # Establish 'piwik.api_url' helper
-  $mojo->helper(
-    'piwik.api_url' => sub {
-      my ($c, $method, $param) = @_;
 
       # Set api_test to true
-      $param->{api_test} = 1;
       return $c->piwik->api($method => $param);
     }
   );
+
+
+  # Establish 'piwik.api_p' helper
+  $mojo->helper(
+    'piwik.api_p' => sub {
+      my ($c, $method, $param) = @_;
+
+      # Get api_test parameter
+      my $api_test = delete $param->{api_test};
+
+      # Get URL
+      my $url = $c->piwik->api_url($method, $param) or return;
+
+      return $url if $api_test;
+
+      # Create Mojo::UserAgent
+      my $ua = Mojo::UserAgent->new(max_redirects => 2);
+
+      # Create promise
+      return $ua->get_p($url)->then(
+        sub {
+          my $tx = shift;
+          my $res = _prepare_response($tx->res);
+
+          # Check for error
+          if ($res->{error}) {
+            return Mojo::Promise->reject($res->{error});
+          };
+          return $res;
+        }
+      )
+    }
+  );
+
 
   # Add legacy 'piwik_api' helper
   $mojo->helper(
@@ -375,6 +417,7 @@ SCRIPTTAG
       return $c->piwik->api(@_);
     }
   );
+
 
   # Establish 'piwik_api_url' helper
   $mojo->helper(
@@ -681,6 +724,26 @@ If an image is expected instead of a JSON object
 (as for the Tracking or the C<ImageGraph> API), the image is base64
 encoded and mime-type prefixed in the hash value of C<image>,
 ready to be embedded as the C<src> of an C<E<lt>img /E<gt>> tag.
+
+
+=head2 piwik.api_p
+
+  $c->piwik->api_p(
+    'API.get' => {
+      site_id => [4,5],
+      period  => 'range',
+      date    => ['2012-11-01', '2012-12-01'],
+      secure  => 1
+    }
+  )->then(
+    sub {
+      my $res = shift;
+      ...
+    }
+  )->wait;
+
+Same as L<piwik.api|/piwik.api>, but returns a L<Mojo::Promise>
+object.
 
 
 =head2 piwik.api_url
