@@ -213,10 +213,14 @@ SCRIPTTAG
       # Get piwik url
       my $url = delete($param->{url}) || $plugin_param->{url};
 
-      if ($url =~ s{^(?:http(s)?:)?//}{}i && $1) {
-        $param->{secure} = 1;
+      # TODO:
+      #   Simplify and deprecate secure parameter
+      if (index($url, '/') != 0) {
+        if ($url =~ s{^(?:http(s)?:)?//}{}i && $1) {
+          $param->{secure} = 1;
+        };
+        $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
       };
-      $url = ($param->{secure} ? 'https' : 'http') . '://' . $url;
 
       # Create request URL
       $url = Mojo::URL->new($url);
@@ -352,7 +356,8 @@ SCRIPTTAG
       my $api_test = delete $param->{api_test};
 
       # Get URL
-      my $url = $c->piwik->api_url($method, $param) or return;
+      my $url = $c->piwik->api_url($method, $param)
+        or return;
 
       return $url if $api_test;
 
@@ -366,31 +371,29 @@ SCRIPTTAG
         return _prepare_response($tx->res) unless $tx->error;
 
         return;
-      }
-
-      # Non-Blocking
-      else {
-
-        # Create delay object
-        my $delay = Mojo::IOLoop->delay(
-          sub {
-            # Return prepared response
-            my $res = pop->success;
-
-            # Release callback with json object
-            $cb->( $res ? _prepare_response($res) : {} );
-          }
-        );
-
-        # Get resource non-blocking
-        $plugin->ua->get($url => $delay->begin);
-
-        # Start IOLoop if not started already
-        $delay->wait unless Mojo::IOLoop->is_running;
       };
 
+      # Non-Blocking
+
+      # Create delay object
+      my $delay = Mojo::IOLoop->delay(
+        sub {
+          # Return prepared response
+          my $res = pop->success;
+
+          # Release callback with json object
+          $cb->( $res ? _prepare_response($res) : {} );
+        }
+      );
+
+      # Get resource non-blocking
+      $plugin->ua->get($url => $delay->begin);
+
+      # Start IOLoop if not started already
+      $delay->wait unless Mojo::IOLoop->is_running;
+
       # Set api_test to true
-      return $c->piwik->api($method => $param);
+      return $delay;
     }
   );
 
@@ -404,7 +407,8 @@ SCRIPTTAG
       my $api_test = delete $param->{api_test};
 
       # Get URL
-      my $url = $c->piwik->api_url($method, $param) or return;
+      my $url = $c->piwik->api_url($method, $param)
+        or return;
 
       return Mojo::Promise->resolve($url) if $api_test;
 
@@ -415,7 +419,7 @@ SCRIPTTAG
           my $res = _prepare_response($tx->res);
 
           # Check for error
-          if ($res->{error}) {
+          if (ref $res eq 'HASH' && $res->{error}) {
             return Mojo::Promise->reject($res->{error});
           };
           return Mojo::Promise->resolve($res);
