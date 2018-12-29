@@ -13,7 +13,7 @@ WriteMakefile(
     'Test::More' => 0
   },
   PREREQ_PM => {
-    'Mojolicious' => 5.27
+    'Mojolicious' => 7.53
   },
   LICENSE      => 'artistic_2',
   (eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (META_MERGE => {
