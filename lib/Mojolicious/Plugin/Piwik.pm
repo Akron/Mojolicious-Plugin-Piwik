@@ -6,7 +6,7 @@ use Mojo::UserAgent;
 use Mojo::Promise;
 use Mojo::IOLoop;
 
-our $VERSION = '0.26_1';
+our $VERSION = '0.26_2';
 
 # Todo:
 # - Better test tracking API support
