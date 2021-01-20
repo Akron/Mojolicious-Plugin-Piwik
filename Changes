@@ -1,7 +1,6 @@
 0.28 2021-01-20
         - Added experimental 'append' parameter.
         - Re-globalize _paq for later usage.
-        - Change track script to be embeded async + defer.
 
 0.27 2019-12-06
         - Fixed bug where the 'secure' parameter was not respected.

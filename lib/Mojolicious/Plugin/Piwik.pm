@@ -112,7 +112,7 @@ sub register {
         };
 
         return b("<script src=\"$prot://${url}piwik.js\" async defer></script>" .
-                   '<script src="' . $c->url_for('piwik_track_script')->to_abs . '" async defer></script>');
+                   '<script src="' . $c->url_for('piwik_track_script')->to_abs . '"></script>');
       }
 
       # Render opt-out tag
