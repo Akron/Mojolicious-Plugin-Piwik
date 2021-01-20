@@ -1,5 +1,6 @@
-0.28 2021-01-19
+0.28 2021-01-20
         - Added experimental 'append' parameter.
+        - Re-globalize _paq for later usage.
 
 0.27 2019-12-06
         - Fixed bug where the 'secure' parameter was not respected.

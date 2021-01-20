@@ -143,10 +143,10 @@ sub register {
 
       # Create piwik tag
       b(<<"SCRIPTTAG");
-<script type="text/javascript">var _paq=_paq||[];(function(){var
+<script type="text/javascript">var _paq=window._paq||[];(function(){var
 u='http'+((document.location.protocol=='https:')?'s':'')+'://$url';
 with(_paq){push(['setSiteId',$site_id]);push(['setTrackerUrl',u+'piwik.php']);
-push(['trackPageView'])};var
+push(['trackPageView'])};window._paq=_paq;var
 d=document,g=d.createElement('script'),s=d.getElementsByTagName('script')[0];
 if(!s){s=d.getElementsByTagName('head')[0].firstChild};
 with(g){type='text/javascript';defer=async=true;
@@ -191,6 +191,7 @@ SCRIPTTAG
             return $c->render(
               format => 'js',
               text => 'var _paq=window._paq||[];' .
+                'window._paq=_paq;'.
                 "_paq.push(['setTrackerUrl','$prot://${url}piwik.php']);" .
                 "_paq.push(['setSiteId',$site_id]);" .
                 q!_paq.push(['trackPageView']);! .
