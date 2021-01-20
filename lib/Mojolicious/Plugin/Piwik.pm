@@ -111,8 +111,8 @@ sub register {
           return '';
         };
 
-        return b("<script src=\"$prot://${url}piwik.js\" async defer></script>" .
-                   '<script src="' . $c->url_for('piwik_track_script')->to_abs . '"></script>');
+        return b('<script src="' . $c->url_for('piwik_track_script')->to_abs . '"></script>' .
+                   "<script src=\"$prot://${url}piwik.js\" async defer></script>");
       }
 
       # Render opt-out tag
@@ -190,8 +190,7 @@ SCRIPTTAG
             # Render tracking code
             return $c->render(
               format => 'js',
-              text => 'var _paq=window._paq||[];' .
-                'window._paq=_paq;'.
+              text => 'var _paq=window._paq=window._paq||[];' .
                 "_paq.push(['setTrackerUrl','$prot://${url}piwik.php']);" .
                 "_paq.push(['setSiteId',$site_id]);" .
                 q!_paq.push(['trackPageView']);! .
