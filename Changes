@@ -1,4 +1,4 @@
-0.28 2021-01-20
+0.28 2021-01-28
         - Added experimental 'append' parameter.
         - Re-globalize _paq for later usage.
 
