@@ -132,6 +132,8 @@ $track = $c->piwik->api(
 });
 
 ok(!$track->{error}, 'No error');
+use Data::Dumper;
+warn Dumper $track;
 ok($track->{image}, 'Image');
 like($track->{image}, qr{base64}, 'Image');
 like($track->{image}, qr{image/gif}, 'Image');
