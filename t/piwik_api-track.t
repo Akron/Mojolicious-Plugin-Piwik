@@ -128,14 +128,22 @@ $c->req->headers->dnt(0);
 $track = $c->piwik->api(
   Track => {
     res => '1024x768',
+    %param,
+    send_image => 1
+});
+
+ok(!$track->{error}, 'No error');
+ok($track->{image}, 'Image');
+like($track->{image}, qr{base64}, 'Image');
+like($track->{image}, qr{image/gif}, 'Image');
+
+$track = $c->piwik->api(
+  Track => {
+    res => '1024x768',
     %param
 });
 
 ok(!$track->{error}, 'No error');
-use Data::Dumper;
-warn Dumper $track;
-ok($track->{image}, 'Image');
-like($track->{image}, qr{base64}, 'Image');
-like($track->{image}, qr{image/gif}, 'Image');
+ok(!$track->{image}, 'No image');
 
 done_testing;

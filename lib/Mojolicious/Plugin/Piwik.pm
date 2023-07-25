@@ -215,6 +215,8 @@ SCRIPTTAG
       # Get piwik url
       my $url = delete($param->{url}) || $plugin_param->{url};
 
+      my $send_image = delete($param->{send_image})  || '0';
+
       # TODO:
       #   Simplify and deprecate secure parameter
       if (!defined $param->{secure} && index($url, '/') != 0) {
@@ -250,12 +252,13 @@ SCRIPTTAG
 
         # Set default values
         for ($param)  {
-          $_->{ua}     //= $header->user_agent if $header->user_agent;
-          $_->{urlref} //= $header->referrer   if $header->referrer;
-          $_->{rand}     = int(rand(10_000));
-          $_->{rec}      = 1;
-          $_->{apiv}     = 1;
-          $_->{url}      = delete $_->{action_url} || $c->url_for->to_abs;
+          $_->{ua}       //= $header->user_agent if $header->user_agent;
+          $_->{urlref}   //= $header->referrer   if $header->referrer;
+          $_->{rand}       = int(rand(10_000));
+          $_->{rec}        = 1;
+          $_->{apiv}       = 1;
+          $_->{url}        = delete $_->{action_url} || $c->url_for->to_abs;
+          $_->{send_image} = $send_image;
 
           # Todo: maybe make optional with parameter
           # $_->{_id} = rand ...
@@ -270,7 +273,6 @@ SCRIPTTAG
         elsif ($header->dnt) {
           return;
         };
-
 
         # Resolution
         if ($param->{res} && ref $param->{res}) {
@@ -752,6 +754,8 @@ C<dnt> - Override the Do-Not-Track setting, in rare cases, this is required.
 
 =back
 
+C<send_image> is set to C<0> by default, but can be overwritten.
+
 C<idSite> is an alias of C<site_id> and C<idsite> and defaults to the id
 of the plugin registration.
 Some parameters are allowed to be array references instead of string values,
@@ -869,14 +873,14 @@ L<Mojolicious>.
 Please make sure you are using Matomo (Piwik) in compliance to the law.
 For german users,
 L<this information|https://www.datenschutzzentrum.de/uploads/projekte/verbraucherdatenschutz/20110315-webanalyse-piwik.pdf>
-(last accessed on 2021-01-19)
+(last accessed on 2023-07-25)
 may help you to design your service correctly.
 You may need to inform your users about your usage of
 Piwik, especially if you are located in the European Union.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012-2021, L<Nils Diewald|https://nils-diewald.de/>.
+Copyright (C) 2012-2023, L<Nils Diewald|https://nils-diewald.de/>.
 
 This program is free software, you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
